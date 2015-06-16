@@ -16,17 +16,39 @@ var Url string
 var User string
 var Password string
 var TargetPath string
+var Flat bool
 
 func main() {
     app := cli.NewApp()
     app.Name = "art"
     app.Usage = "Artifactory CLI"
 
-    flags := []cli.Flag{
-        cli.BoolFlag{
-         Name:  "dry-run",
-         Usage: "Set to true to disable communication with Artifactory",
+    app.Commands = []cli.Command{
+        {
+            Name: "upload",
+            Flags: GetUploadFlags(),
+            Aliases: []string{"u"},
+            Usage: "upload <local path> <repo name:repo path>",
+            Action: func(c *cli.Context) {
+                Upload(c)
+            },
         },
+        {
+            Name: "download",
+            Flags: GetDownloadFlags(),
+            Aliases: []string{"d"},
+            Usage: "download <repo path>",
+            Action: func(c *cli.Context) {
+                Download(c)
+            },
+        },
+    }
+
+    app.Run(os.Args)
+}
+
+func GetFlags() []cli.Flag {
+    return []cli.Flag{
         cli.StringFlag{
          Name:  "url",
          Usage: "Artifactory URL",
@@ -40,29 +62,30 @@ func main() {
          Usage: "Artifactory password",
         },
     }
+}
 
-    app.Commands = []cli.Command{
-        {
-            Name: "upload",
-            Flags: flags,
-            Aliases: []string{"u"},
-            Usage: "upload <local path> <repo name:repo path>",
-            Action: func(c *cli.Context) {
-                Upload(c)
-            },
-        },
-        {
-            Name: "download",
-            Flags: flags,
-            Aliases: []string{"d"},
-            Usage: "download <repo path>",
-            Action: func(c *cli.Context) {
-                Download(c)
-            },
-        },
+func GetUploadFlags() []cli.Flag {
+    flags := []cli.Flag{
+        nil,nil,nil,nil,
     }
+    copy(flags[0:3], GetFlags())
+    flags[3] = cli.BoolFlag{
+         Name:  "dry-run",
+         Usage: "Set to true to disable communication with Artifactory",
+    }
+    return flags
+}
 
-    app.Run(os.Args)
+func GetDownloadFlags() []cli.Flag {
+    flags := []cli.Flag{
+        nil,nil,nil,nil,
+    }
+    copy(flags[0:3], GetFlags())
+    flags[3] = cli.BoolFlag{
+        Name:  "flat",
+        Usage: "Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded files",
+    }
+    return flags
 }
 
 func InitFlags(c *cli.Context) {
@@ -74,6 +97,7 @@ func InitFlags(c *cli.Context) {
     User = c.String("user")
     Password = c.String("password")
     DryRun = c.Bool("dry-run")
+    Flat = c.Bool("flat")
 }
 
 func GetFilesToUpload() []Artifact {
@@ -104,19 +128,6 @@ func GetFilesToUpload() []Artifact {
     return artifacts
 }
 
-func GetPathsFromArtifactory(repo string, path string) {
-    aqlJson := BuildAqlJson(repo, path, "*")
-    data := "items.find(" + aqlJson + ")"
-    responseJson := SendPost(Url + "api/search/aql", data, User, Password)
-    println(string(responseJson))
-
-	var f interface{}
-	err := json.Unmarshal(responseJson, &f)
-	CheckError(err)
-	m := f.(map[string]interface{})
-	println(m)
-}
-
 func Download(c *cli.Context) {
     InitFlags(c)
     size := len(c.Args())
@@ -125,10 +136,21 @@ func Download(c *cli.Context) {
     }
 
     CheckAndGetRepoPathFromArg(c.Args()[0])
-    split := strings.Split(c.Args()[0], ":")
-    repoName := split[0]
-    repoPath := split[1]
-    GetPathsFromArtifactory(repoName, repoPath)
+    repo := strings.Split(c.Args()[0], ":")[0]
+    url := Url + "api/search/pattern?pattern=" + c.Args()[0]
+    json := SendGet(url, User, Password)
+    files := ParsePatternSearchResponse(json)
+    for _, file := range files {
+        downloadPath := Url + repo + "/" + file
+        DownloadFile(downloadPath, file, Flat)
+    }
+}
+
+func ParsePatternSearchResponse(resp []byte) []string {
+    var f Files
+    err := json.Unmarshal(resp, &f)
+    CheckError(err)
+    return f.Files
 }
 
 func Upload(c *cli.Context) {
@@ -143,10 +165,7 @@ func Upload(c *cli.Context) {
 
     for _, artifact := range artifacts {
         target := Url + artifact.targetPath
-        println("Uploading artifact " + artifact.localPath + " to " + target)
-        if !DryRun {
-            PutFile(artifact.localPath, target, User, Password)
-        }
+        PutFile(artifact.localPath, target, User, Password, DryRun)
     }
 }
 
@@ -168,7 +187,6 @@ func GetRootPath(path string) string {
     return path[0:index]
 }
 
-// Gets the Artifactory target path for artifacts deployment.
 func CheckAndGetRepoPathFromArg(arg string) string {
     if strings.Index(arg, ":") == -1 {
         Exit("Invalid repo path format: '" + arg + "'. Should be [repo:path].")
@@ -179,4 +197,8 @@ func CheckAndGetRepoPathFromArg(arg string) string {
 type Artifact struct {
     localPath string
     targetPath string
+}
+
+type Files struct {
+    Files []string
 }
