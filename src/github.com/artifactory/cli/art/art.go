@@ -17,6 +17,7 @@ var User string
 var Password string
 var TargetPath string
 var Flat bool
+var UseRegExp bool
 
 func main() {
     app := cli.NewApp()
@@ -66,12 +67,16 @@ func GetFlags() []cli.Flag {
 
 func GetUploadFlags() []cli.Flag {
     flags := []cli.Flag{
-        nil,nil,nil,nil,
+        nil,nil,nil,nil,nil,
     }
     copy(flags[0:3], GetFlags())
     flags[3] = cli.BoolFlag{
          Name:  "dry-run",
          Usage: "Set to true to disable communication with Artifactory",
+    }
+    flags[4] = cli.BoolFlag{
+         Name:  "regexp",
+         Usage: "Set to true to use a regular expression instead of wildcards expression to collect files to upload",
     }
     return flags
 }
@@ -98,6 +103,7 @@ func InitFlags(c *cli.Context) {
     Password = c.String("password")
     DryRun = c.Bool("dry-run")
     Flat = c.Bool("flat")
+    UseRegExp = c.Bool("regexp")
 }
 
 func GetFilesToUpload() []Artifact {
@@ -106,10 +112,14 @@ func GetFilesToUpload() []Artifact {
         Exit("Path does not exist: " + rootPath)
     }
     artifacts := []Artifact{}
+    // If the path is a single file then return it
     if !IsDir(rootPath) {
         artifacts = append(artifacts, Artifact{rootPath, TargetPath})
         return artifacts
     }
+
+    println("[Temp message] Using " + LocalPath + " regexp to collect artifacts")
+
     r, err := regexp.Compile(LocalPath)
     CheckError(err)
 
@@ -126,6 +136,11 @@ func GetFilesToUpload() []Artifact {
         }
     }
     return artifacts
+}
+
+func LocalPathToRegExp() {
+    LocalPath = strings.Replace(LocalPath, ".", "\\.", -1)
+    LocalPath = strings.Replace(LocalPath, "*", ".*", -1)
 }
 
 func Download(c *cli.Context) {
@@ -161,6 +176,9 @@ func Upload(c *cli.Context) {
     }
     LocalPath = c.Args()[0]
     TargetPath = CheckAndGetRepoPathFromArg(c.Args()[1])
+    if !UseRegExp {
+        LocalPathToRegExp()
+    }
     artifacts := GetFilesToUpload()
 
     for _, artifact := range artifacts {
