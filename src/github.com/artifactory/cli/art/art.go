@@ -131,7 +131,7 @@ func GetFilesToUpload() []Artifact {
         for i := 1; i < size; i++ {
             target = strings.Replace(target, "$" + strconv.Itoa(i), groups[i], -1)
         }
-        if ( size > 0) {
+        if (size > 0) {
             artifacts = append(artifacts, Artifact{path, target})
         }
     }
@@ -145,34 +145,32 @@ func LocalPathToRegExp() {
 
 func Download(c *cli.Context) {
     InitFlags(c)
-    size := len(c.Args())
-    if size != 1 {
-        Exit("Wrong number of arguments")
+    if len(c.Args()) != 1 {
+        Exit("Wrong number of arguments. Try 'art download --help'.")
     }
 
-    CheckAndGetRepoPathFromArg(c.Args()[0])
-    repo := strings.Split(c.Args()[0], ":")[0]
-    url := Url + "api/search/pattern?pattern=" + c.Args()[0]
-    json := SendGet(url, User, Password)
-    files := ParsePatternSearchResponse(json)
-    for _, file := range files {
-        downloadPath := Url + repo + "/" + file
-        DownloadFile(downloadPath, file, Flat)
-    }
-}
+    url := Url + "api/search/aql"
+    pattern := CheckAndGetRepoPathFromArg(c.Args()[0])
+    data := BuildAqlSearchQuery(pattern)
 
-func ParsePatternSearchResponse(resp []byte) []string {
-    var f Files
-    err := json.Unmarshal(resp, &f)
-    CheckError(err)
-    return f.Files
+    println(url)
+    println(data)
+
+    json := SendPost(url, data, User, Password)
+    resultItems := ParseAqlSearchResponse(json)
+    size := len(resultItems)
+
+    for i := 0; i < size; i++ {
+        downloadPath := Url + resultItems[i].Repo + "/" + resultItems[i].Path + "/" + resultItems[i].Name
+        DownloadFile(downloadPath, resultItems[i].Path, resultItems[i].Name, Flat)
+    }
 }
 
 func Upload(c *cli.Context) {
     InitFlags(c)
     size := len(c.Args())
     if size != 2 {
-        Exit("Wrong number of arguments")
+        Exit("Wrong number of arguments. Try 'art upload --help'.")
     }
     LocalPath = c.Args()[0]
     TargetPath = CheckAndGetRepoPathFromArg(c.Args()[1])
@@ -185,6 +183,14 @@ func Upload(c *cli.Context) {
         target := Url + artifact.targetPath
         PutFile(artifact.localPath, target, User, Password, DryRun)
     }
+}
+
+func ParseAqlSearchResponse(resp []byte) []AqlSearchResultItem {
+    var result AqlSearchResult
+    err := json.Unmarshal(resp, &result)
+
+    CheckError(err)
+    return result.Results
 }
 
 // Get a CLI flagg. If the flag does not exist, exit with a message.
@@ -209,7 +215,8 @@ func CheckAndGetRepoPathFromArg(arg string) string {
     if strings.Index(arg, ":") == -1 {
         Exit("Invalid repo path format: '" + arg + "'. Should be [repo:path].")
     }
-    return strings.Replace(arg, ":", "/", -1)
+    path := strings.Replace(arg, ":/", "/", -1)
+    return strings.Replace(path, ":", "/", -1)
 }
 
 type Artifact struct {
@@ -217,6 +224,12 @@ type Artifact struct {
     targetPath string
 }
 
-type Files struct {
-    Files []string
+type AqlSearchResult struct {
+    Results []AqlSearchResultItem
+}
+
+type AqlSearchResultItem struct {
+    Repo string
+    Path string
+    Name string
 }

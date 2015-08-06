@@ -3,7 +3,6 @@ package main
 import (
     "os"
     "io"
-    "strings"
 	"bytes"
 	"net/http"
 	"io/ioutil"
@@ -47,22 +46,12 @@ func PutFile(filePath string, url string, user string, password string, dryRun b
     println("Artifactory response:", resp.Status)
 }
 
-func DownloadFile(downloadPath string, localPath string, flat bool) {
+func DownloadFile(downloadPath string, localPath string, fileName string, flat bool) {
     println("Downloading " + downloadPath)
-    index := strings.LastIndex(localPath, "/")
-    length := len(localPath)
-    var fileName string
-    var dir string
 
-    if index != -1 && index != length-1 {
-        dir = localPath[: index]
-        fileName = localPath[index+1 : length-1]
-    } else {
-        fileName = localPath
-    }
-    if !flat && dir != "" {
-        os.MkdirAll(dir ,0777)
-        fileName = dir + "/" + fileName
+    if !flat && localPath != "" {
+        os.MkdirAll(localPath ,0777)
+        fileName = localPath + "/" + fileName
     }
 
     out, err := os.Create(fileName)
