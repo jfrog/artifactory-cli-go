@@ -111,14 +111,15 @@ func GetFilesToUpload() []Artifact {
     if !IsPathExists(rootPath) {
         Exit("Path does not exist: " + rootPath)
     }
+    if !UseRegExp {
+        LocalPathToRegExp()
+    }
     artifacts := []Artifact{}
     // If the path is a single file then return it
     if !IsDir(rootPath) {
         artifacts = append(artifacts, Artifact{rootPath, TargetPath})
         return artifacts
     }
-
-    println("[Temp message] Using " + LocalPath + " regexp to collect artifacts")
 
     r, err := regexp.Compile(LocalPath)
     CheckError(err)
@@ -174,9 +175,6 @@ func Upload(c *cli.Context) {
     }
     LocalPath = c.Args()[0]
     TargetPath = CheckAndGetRepoPathFromArg(c.Args()[1])
-    if !UseRegExp {
-        LocalPathToRegExp()
-    }
     artifacts := GetFilesToUpload()
 
     for _, artifact := range artifacts {
@@ -212,7 +210,8 @@ func GetRootPath(path string) string {
 }
 
 func CheckAndGetRepoPathFromArg(arg string) string {
-    if strings.Index(arg, ":") == -1 {
+    Sections := strings.Split(arg, ":")
+    if len(Sections) != 2 || Sections[0] == "" || Sections[1] == "" {
         Exit("Invalid repo path format: '" + arg + "'. Should be [repo:path].")
     }
     path := strings.Replace(arg, ":/", "/", -1)
