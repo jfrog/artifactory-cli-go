@@ -21,16 +21,24 @@ func BuildAqlSearchQuery(searchPattern string) string {
             "\"repo\": \"" + repo + "\"," +
             "\"$or\": ["
 
-    for i := 0; i < Size; i++ {
+    if Size == 0 {
         json +=
             "{" +
-                BuildInnerQuery(repo, Pairs[i].Path, Pairs[i].File) +
+                BuildInnerQuery(repo, ".", searchPattern) +
             "}"
+    } else {
+        for i := 0; i < Size; i++ {
+            json +=
+                "{" +
+                    BuildInnerQuery(repo, Pairs[i].Path, Pairs[i].File) +
+                "}"
 
-        if (i+1 < Size) {
-            json += ","
+            if (i+1 < Size) {
+                json += ","
+            }
         }
     }
+
 
     json +=
             "]" +

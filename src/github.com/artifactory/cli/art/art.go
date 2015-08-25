@@ -5,6 +5,7 @@ import (
   "strings"
   "regexp"
   "strconv"
+  "net/http"
   "github.com/codegangsta/cli"
   "encoding/json"
 )
@@ -130,7 +131,7 @@ func GetFilesToUpload() []Artifact {
         size := len(groups)
         target := TargetPath
         for i := 1; i < size; i++ {
-            target = strings.Replace(target, "$" + strconv.Itoa(i), groups[i], -1)
+            target = strings.Replace(target, "{" + strconv.Itoa(i) + "}", groups[i], -1)
         }
         if (size > 0) {
             artifacts = append(artifacts, Artifact{path, target})
@@ -154,8 +155,7 @@ func Download(c *cli.Context) {
     pattern := CheckAndGetRepoPathFromArg(c.Args()[0])
     data := BuildAqlSearchQuery(pattern)
 
-    println(url)
-    println(data)
+    println("AQL query: " + data)
 
     json := SendPost(url, data, User, Password)
     resultItems := ParseAqlSearchResponse(json)
@@ -179,8 +179,24 @@ func Upload(c *cli.Context) {
 
     for _, artifact := range artifacts {
         target := Url + artifact.targetPath
-        PutFile(artifact.localPath, target, User, Password, DryRun)
+        UploadFile(artifact.localPath, target)
     }
+}
+
+func UploadFile(localPath string, targetPath string) {
+    println("Uploading artifact: " + targetPath)
+    fileContent := ReadFile(localPath)
+
+    var deployed bool = false
+    var resp *http.Response
+    if len(fileContent) >= 10240 {
+        resp = tryChecksumDeploy(fileContent, targetPath)
+        deployed = (resp.StatusCode == 201 || resp.StatusCode == 200)
+    }
+    if !deployed {
+        resp = PutContent(fileContent, nil, targetPath, User, Password, DryRun)
+    }
+    println("Artifactory response: " + resp.Status)
 }
 
 func ParseAqlSearchResponse(resp []byte) []AqlSearchResultItem {
@@ -228,7 +244,7 @@ type AqlSearchResult struct {
 }
 
 type AqlSearchResultItem struct {
-    Repo string
-    Path string
-    Name string
-}
+     Repo string
+     Path string
+     Name string
+ }
