@@ -2,12 +2,13 @@ package main
 
 import (
   "strings"
+  "github.com/artifactory/cli/art/utils"
 )
 
 func BuildAqlSearchQuery(searchPattern string) string {
     index := strings.Index(searchPattern, "/")
     if index == -1 {
-        Exit("Invalid search pattern: " + searchPattern)
+        utils.Exit("Invalid search pattern: " + searchPattern)
     }
 
     repo := searchPattern[:index]

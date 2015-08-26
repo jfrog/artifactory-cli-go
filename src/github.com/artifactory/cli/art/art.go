@@ -7,6 +7,7 @@ import (
   "strconv"
   "net/http"
   "github.com/codegangsta/cli"
+  "github.com/artifactory/cli/art/utils"
   "encoding/json"
 )
 
@@ -109,23 +110,23 @@ func InitFlags(c *cli.Context) {
 
 func GetFilesToUpload() []Artifact {
     rootPath := GetRootPath(LocalPath)
-    if !IsPathExists(rootPath) {
-        Exit("Path does not exist: " + rootPath)
+    if !utils.IsPathExists(rootPath) {
+        utils.Exit("Path does not exist: " + rootPath)
     }
     if !UseRegExp {
         LocalPathToRegExp()
     }
     artifacts := []Artifact{}
     // If the path is a single file then return it
-    if !IsDir(rootPath) {
+    if !utils.IsDir(rootPath) {
         artifacts = append(artifacts, Artifact{rootPath, TargetPath})
         return artifacts
     }
 
     r, err := regexp.Compile(LocalPath)
-    CheckError(err)
+    utils.CheckError(err)
 
-    paths := ListFiles(rootPath)
+    paths := utils.ListFiles(rootPath)
     for _, path := range paths {
         groups := r.FindStringSubmatch(path)
         size := len(groups)
@@ -148,7 +149,7 @@ func LocalPathToRegExp() {
 func Download(c *cli.Context) {
     InitFlags(c)
     if len(c.Args()) != 1 {
-        Exit("Wrong number of arguments. Try 'art download --help'.")
+        utils.Exit("Wrong number of arguments. Try 'art download --help'.")
     }
 
     url := Url + "api/search/aql"
@@ -157,13 +158,15 @@ func Download(c *cli.Context) {
 
     println("AQL query: " + data)
 
-    json := SendPost(url, data, User, Password)
+    json := utils.SendPost(url, data, User, Password)
     resultItems := ParseAqlSearchResponse(json)
     size := len(resultItems)
 
     for i := 0; i < size; i++ {
         downloadPath := Url + resultItems[i].Repo + "/" + resultItems[i].Path + "/" + resultItems[i].Name
-        DownloadFile(downloadPath, resultItems[i].Path, resultItems[i].Name, Flat)
+        println("Downloading " + downloadPath)
+        resp := utils.DownloadFile(downloadPath, resultItems[i].Path, resultItems[i].Name, Flat)
+        println("Artifactory response:", resp.Status)
     }
 }
 
@@ -171,7 +174,7 @@ func Upload(c *cli.Context) {
     InitFlags(c)
     size := len(c.Args())
     if size != 2 {
-        Exit("Wrong number of arguments. Try 'art upload --help'.")
+        utils.Exit("Wrong number of arguments. Try 'art upload --help'.")
     }
     LocalPath = c.Args()[0]
     TargetPath = CheckAndGetRepoPathFromArg(c.Args()[1])
@@ -185,16 +188,16 @@ func Upload(c *cli.Context) {
 
 func UploadFile(localPath string, targetPath string) {
     println("Uploading artifact: " + targetPath)
-    fileContent := ReadFile(localPath)
+    fileContent := utils.ReadFile(localPath)
 
     var deployed bool = false
     var resp *http.Response
     if len(fileContent) >= 10240 {
-        resp = tryChecksumDeploy(fileContent, targetPath)
+        resp = utils.TryChecksumDeploy(fileContent, targetPath, User, Password, DryRun)
         deployed = (resp.StatusCode == 201 || resp.StatusCode == 200)
     }
     if !deployed {
-        resp = PutContent(fileContent, nil, targetPath, User, Password, DryRun)
+        resp = utils.PutContent(fileContent, nil, targetPath, User, Password, DryRun)
     }
     println("Artifactory response: " + resp.Status)
 }
@@ -203,15 +206,15 @@ func ParseAqlSearchResponse(resp []byte) []AqlSearchResultItem {
     var result AqlSearchResult
     err := json.Unmarshal(resp, &result)
 
-    CheckError(err)
+    utils.CheckError(err)
     return result.Results
 }
 
-// Get a CLI flagg. If the flag does not exist, exit with a message.
+// Get a CLI flagg. If the flag does not exist, utils.Exit with a message.
 func GetMandatoryFlag(c *cli.Context, flag string) string {
     value := c.String(flag)
     if value == "" {
-        Exit("The --" + flag + " flag is mandatory")
+        utils.Exit("The --" + flag + " flag is mandatory")
     }
     return value
 }
@@ -228,7 +231,7 @@ func GetRootPath(path string) string {
 func CheckAndGetRepoPathFromArg(arg string) string {
     Sections := strings.Split(arg, ":")
     if len(Sections) != 2 || Sections[0] == "" || Sections[1] == "" {
-        Exit("Invalid repo path format: '" + arg + "'. Should be [repo:path].")
+        utils.Exit("Invalid repo path format: '" + arg + "'. Should be [repo:path].")
     }
     path := strings.Replace(arg, ":/", "/", -1)
     return strings.Replace(path, ":", "/", -1)
