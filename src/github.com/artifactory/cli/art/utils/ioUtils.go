@@ -2,7 +2,6 @@ package utils
 
 import (
     "os"
-    "io"
 	"bytes"
 	"net/http"
 	"io/ioutil"
@@ -21,6 +20,15 @@ func IsDir(path string) bool {
 func IsPathExists(path string) bool {
     _, err := os.Stat(path)
     return !os.IsNotExist(err)
+}
+
+func IsFileExists(path string) bool {
+    if !IsPathExists(path) {
+        return false
+    }
+    f, err := os.Stat(path)
+    CheckError(err)
+    return !f.IsDir()
 }
 
 func ReadFile(filePath string) []byte {
@@ -61,7 +69,7 @@ func PutFile(filePath string, url string, user string, password string, dryRun b
     PutContent(content, nil, url, user, password, dryRun)
 }
 
-func DownloadFile(downloadPath string, localPath string, fileName string, flat bool) *http.Response {
+func DownloadFile(downloadPath string, localPath string, fileName string, flat bool, user string, password string) *http.Response {
     if !flat && localPath != "" {
         os.MkdirAll(localPath ,0777)
         fileName = localPath + "/" + fileName
@@ -70,28 +78,27 @@ func DownloadFile(downloadPath string, localPath string, fileName string, flat b
     out, err := os.Create(fileName)
     CheckError(err)
     defer out.Close()
-    resp, err := http.Get(downloadPath)
-    CheckError(err)
-    defer resp.Body.Close()
-    _, err = io.Copy(out, resp.Body)
+    resp, body := SendGet(downloadPath, user, password)
+    out.Write(body)
     CheckError(err)
 
     return resp
 }
 
 func SendPost(url string, data string, user string, password string) []byte {
-    return Send("POST", url, data, user, password)
+    _, body := Send("POST", url, data, user, password)
+    return body
 }
 
-func SendGet(url string, user string, password string) []byte {
+func SendGet(url string, user string, password string) (*http.Response, []byte) {
     return Send("GET", url, "", user, password)
 }
 
-func SendHead(url string, user string, password string) []byte {
-    return Send("Head", url, "", user, password)
+func SendHead(url string, user string, password string) (*http.Response, []byte) {
+    return Send("HEAD", url, "", user, password)
 }
 
-func Send(method string, url string, data string, user string, password string) []byte {
+func Send(method string, url string, data string, user string, password string) (*http.Response, []byte) {
     var req *http.Request
     var err error
     if data != "" {
@@ -109,10 +116,8 @@ func Send(method string, url string, data string, user string, password string) 
     resp, err := client.Do(req)
     CheckError(err)
     defer resp.Body.Close()
-
-    println("Response status:", resp.Status)
     body, _ := ioutil.ReadAll(resp.Body)
-    return body
+    return resp, body
 }
 
 // Return the list of all files and directories (recursive) in the specified path

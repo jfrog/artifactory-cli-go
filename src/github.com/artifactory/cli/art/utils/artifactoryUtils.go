@@ -12,27 +12,43 @@ func TryChecksumDeploy(fileContent []byte, targetPath string, user string, passw
 
     headers := make(map[string]string)
     headers["X-Checksum-Deploy"] = "true"
-    headers["X-Checksum-Sha1"] = checksum.sha1
-    headers["X-Checksum-Md5"] = checksum.md5
+    headers["X-Checksum-Sha1"] = checksum.Sha1
+    headers["X-Checksum-Md5"] = checksum.Md5
 
     return PutContent(nil, headers, targetPath, user, password, dryRun)
+}
+
+func ShouldDownloadFile(localFilePath string, downloadPath string, user string, password string, dryRun bool) bool {
+    if !IsFileExists(localFilePath) {
+        return true
+    }
+    localChecksum := CalcChecksum(ReadFile(localFilePath))
+    artifactoryChecksum := FetchChecksumFromArtifactory(downloadPath, user, password)
+    if localChecksum.Md5 != artifactoryChecksum.Md5 || localChecksum.Sha1 != artifactoryChecksum.Sha1 {
+       return true
+    }
+    return false
 }
 
 func CalcChecksum(data []byte) *CheckSum {
     checksum := new(CheckSum)
     md5Res := md5.Sum(data)
     sha1Res := sha1.Sum(data)
-    checksum.md5 = hex.EncodeToString(md5Res[:])
-    checksum.sha1 = hex.EncodeToString(sha1Res[:])
+    checksum.Md5 = hex.EncodeToString(md5Res[:])
+    checksum.Sha1 = hex.EncodeToString(sha1Res[:])
 
     return checksum
 }
 
-func FetchChecksumFromArtifactory(downloadUrl string) {
-
+func FetchChecksumFromArtifactory(downloadUrl string, user string, password string) *CheckSum {
+    resp, _ := SendHead(downloadUrl, user, password)
+    checksum := new(CheckSum)
+    checksum.Md5 = resp.Header.Get("X-Checksum-Md5")
+    checksum.Sha1 = resp.Header.Get("X-Checksum-Sha1")
+    return checksum
 }
 
 type CheckSum struct {
-    md5 string
-    sha1 string
+    Md5 string
+    Sha1 string
 }

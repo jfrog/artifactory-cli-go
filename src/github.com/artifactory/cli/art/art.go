@@ -164,9 +164,15 @@ func Download(c *cli.Context) {
 
     for i := 0; i < size; i++ {
         downloadPath := Url + resultItems[i].Repo + "/" + resultItems[i].Path + "/" + resultItems[i].Name
-        println("Downloading " + downloadPath)
-        resp := utils.DownloadFile(downloadPath, resultItems[i].Path, resultItems[i].Name, Flat)
-        println("Artifactory response:", resp.Status)
+        print("Downloading " + downloadPath + "...")
+
+        localFilePath := resultItems[i].Path + "/" + resultItems[i].Name
+        if utils.ShouldDownloadFile(localFilePath, downloadPath, User, Password, DryRun) {
+            resp := utils.DownloadFile(downloadPath, resultItems[i].Path, resultItems[i].Name, Flat, User, Password)
+            println("Artifactory response:", resp.Status)
+        } else {
+            println("File already exists locally.")
+        }
     }
 }
 
@@ -187,7 +193,7 @@ func Upload(c *cli.Context) {
 }
 
 func UploadFile(localPath string, targetPath string) {
-    println("Uploading artifact: " + targetPath)
+    print("Uploading artifact: " + targetPath + "...")
     fileContent := utils.ReadFile(localPath)
 
     var deployed bool = false
