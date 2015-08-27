@@ -23,8 +23,8 @@ var UseRegExp bool
 
 func main() {
     app := cli.NewApp()
-    app.Name = "art"
-    app.Usage = "Artifactory CLI"
+    app.Name = "Artifactory CLI"
+    app.Usage = "See https://github.com/JFrogDev/artifactory-cli-go for usage instructions."
 
     app.Commands = []cli.Command{
         {
@@ -132,7 +132,8 @@ func GetFilesToUpload() []Artifact {
         size := len(groups)
         target := TargetPath
         for i := 1; i < size; i++ {
-            target = strings.Replace(target, "{" + strconv.Itoa(i) + "}", groups[i], -1)
+            group := strings.Replace(groups[i], "\\", "/", -1)
+            target = strings.Replace(target, "{" + strconv.Itoa(i) + "}", group, -1)
         }
         if (size > 0) {
             artifacts = append(artifacts, Artifact{path, target})
