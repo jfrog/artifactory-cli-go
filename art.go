@@ -7,7 +7,7 @@ import (
   "strconv"
   "net/http"
   "github.com/codegangsta/cli"
-  "github.com/artifactory/cli/art/utils"
+  "github.com/JFrogDev/artifactory-cli-go/utils"
   "encoding/json"
 )
 

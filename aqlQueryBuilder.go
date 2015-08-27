@@ -2,7 +2,7 @@ package main
 
 import (
   "strings"
-  "github.com/artifactory/cli/art/utils"
+  "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
 func BuildAqlSearchQuery(searchPattern string) string {
