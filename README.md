@@ -60,25 +60,12 @@ The argument should have the following format: [repository name]:[repository pat
 The path can include symbols in the form of {1}, {2}, ...
 These symbols are replaced with the sections enclosed with parenthesis in the first argument.
 
-##### Examples
-
-The following command uploads 'froggy.tgz' to the root of 'my-local-repo' repository
-
-```console
-$ art upload froggy.tgz my-local-repo --url=http://domain/artifactory --user=admin --password=password
-```
-
-Upload all the files from the current directory to another directory in 'my-local-repo'
-
-```console
-$ art upload * my-local-repo/uploaded/ --url=http://domain/artifactory --user=admin --password=password
-```
-
+##### Example
 The following command collects all the zip files located under the build directory (including sub-directories)
 and uploads them to the libs-release-local repository, under the zipFiles folder, while keeping the files original names.
 
 ```console
-$ artifactory-cli-go upload build/(*.zip) libs-release-local:zipFiles/{1} --url=http://localhost:8081/artifactory --user=admin --password=password
+$ artifactory-cli-go upload --url=http://localhost:8081/artifactory --user=admin --password=password build/(*.zip) libs-release-local:zipFiles/{1}
 ```
 
 #### The Download command
