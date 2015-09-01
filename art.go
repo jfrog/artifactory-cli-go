@@ -108,14 +108,24 @@ func InitFlags(c *cli.Context) {
     UseRegExp = c.Bool("regexp")
 }
 
+func prepareLocalPath() {
+    if strings.HasPrefix(LocalPath, "./") {
+        LocalPath = LocalPath[2:]
+    } else
+    if strings.HasPrefix(LocalPath, ".\\") {
+        LocalPath = LocalPath[3:]
+    }
+    if !UseRegExp {
+        LocalPathToRegExp()
+    }
+}
+
 func GetFilesToUpload() []Artifact {
     rootPath := GetRootPath(LocalPath)
     if !utils.IsPathExists(rootPath) {
         utils.Exit("Path does not exist: " + rootPath)
     }
-    if !UseRegExp {
-        LocalPathToRegExp()
-    }
+    prepareLocalPath()
     artifacts := []Artifact{}
     // If the path is a single file then return it
     if !utils.IsDir(rootPath) {
@@ -128,14 +138,21 @@ func GetFilesToUpload() []Artifact {
 
     paths := utils.ListFiles(rootPath)
     for _, path := range paths {
+        if utils.IsDir(path) {
+            continue
+        }
+
         groups := r.FindStringSubmatch(path)
         size := len(groups)
         target := TargetPath
-        for i := 1; i < size; i++ {
-            group := strings.Replace(groups[i], "\\", "/", -1)
-            target = strings.Replace(target, "{" + strconv.Itoa(i) + "}", group, -1)
-        }
         if (size > 0) {
+            for i := 1; i < size; i++ {
+                group := strings.Replace(groups[i], "\\", "/", -1)
+                target = strings.Replace(target, "{" + strconv.Itoa(i) + "}", group, -1)
+            }
+            if strings.HasSuffix(target, "/") {
+                target += utils.GetFileNameFromPath(path)
+            }
             artifacts = append(artifacts, Artifact{path, target})
         }
     }
@@ -155,6 +172,10 @@ func Download(c *cli.Context) {
 
     url := Url + "api/search/aql"
     pattern := CheckAndGetRepoPathFromArg(c.Args()[0])
+    if strings.HasSuffix(pattern, "/") {
+        pattern += "*"
+    }
+
     data := BuildAqlSearchQuery(pattern)
 
     println("AQL query: " + data)
@@ -168,9 +189,13 @@ func Download(c *cli.Context) {
         print("Downloading " + downloadPath + "...")
 
         localFilePath := resultItems[i].Path + "/" + resultItems[i].Name
-        if utils.ShouldDownloadFile(localFilePath, downloadPath, User, Password, DryRun) {
-            resp := utils.DownloadFile(downloadPath, resultItems[i].Path, resultItems[i].Name, Flat, User, Password)
-            println("Artifactory response:", resp.Status)
+        if utils.ShouldDownloadFile(localFilePath, downloadPath, User, Password) {
+            resp := utils.DownloadFile(downloadPath, resultItems[i].Path, resultItems[i].Name, Flat, User, Password, DryRun)
+            if !DryRun {
+                println("Artifactory response:", resp.Status)
+            } else {
+                println()
+            }
         } else {
             println("File already exists locally.")
         }
@@ -201,12 +226,16 @@ func UploadFile(localPath string, targetPath string) {
     var resp *http.Response
     if len(fileContent) >= 10240 {
         resp = utils.TryChecksumDeploy(fileContent, targetPath, User, Password, DryRun)
-        deployed = (resp.StatusCode == 201 || resp.StatusCode == 200)
+        deployed = !DryRun && (resp.StatusCode == 201 || resp.StatusCode == 200)
     }
     if !deployed {
         resp = utils.PutContent(fileContent, nil, targetPath, User, Password, DryRun)
     }
-    println("Artifactory response: " + resp.Status)
+    if !DryRun {
+        println("Artifactory response: " + resp.Status)
+    } else {
+        println()
+    }
 }
 
 func ParseAqlSearchResponse(resp []byte) []AqlSearchResultItem {
@@ -228,11 +257,50 @@ func GetMandatoryFlag(c *cli.Context, flag string) string {
 
 // Get the local root path, from which to start collecting artifacts to be uploaded to Artifactory.
 func GetRootPath(path string) string {
-    index := strings.Index(path, "(")
-    if index == -1 {
+    // The first step is to split the local path pattern into sections, by the file seperator.
+    seperator := "/"
+    sections := strings.Split(path, seperator)
+    if len(sections) == 1 {
+        seperator = "\\"
+        sections = strings.Split(path, seperator)
+    }
+
+    // If we got only one section, meaning no file seperators, we should return "." if it is a pattern
+    // or if it is not a pattern, return it as is.
+    if len(sections) == 1 {
+        if UseRegExp {
+            if strings.Index(path, "(") != -1 {
+                return "."
+            }
+        } else {
+            if strings.Index(path, "*") != -1 {
+                return "."
+            }
+        }
         return path
     }
-    return path[0:index]
+
+    // Now we start building the root path, making sure to leave out the sub-directory that includes the pattern.
+    rootPath := ""
+    for _, section := range sections {
+        if section == "" {
+            continue
+        }
+        if UseRegExp {
+            if strings.Index(section, "(") != -1 {
+                break
+            }
+        } else {
+            if strings.Index(section, "*") != -1 {
+                break
+            }
+        }
+        if rootPath != "" {
+            rootPath += seperator
+        }
+        rootPath += section
+    }
+    return rootPath
 }
 
 func CheckAndGetRepoPathFromArg(arg string) string {

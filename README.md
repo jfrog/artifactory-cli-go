@@ -53,20 +53,27 @@ Used to upload artifacts to Artifactory.
 ##### Arguments
 * The first argument is the path to the files to be uploaded to Artifactory.
 The path can include a single file or multiple files, by using the * wildcard.
-**Important:** The first wildcard in the expression must be enclosed in parenthesis.
+**Important:** If the path is provided as a regular expression (with the --regexp=true option) then
+the first regular expression appearing as part of the argument must be enclosed in parenthesis.
 
 * The second argument is the upload path in Artifactory.
 The argument should have the following format: [repository name]:[repository path]
 The path can include symbols in the form of {1}, {2}, ...
 These symbols are replaced with the sections enclosed with parenthesis in the first argument.
 
-##### Example
-The following command collects all the zip files located under the build directory (including sub-directories)
-and uploads them to the libs-release-local repository, under the zipFiles folder, while keeping the files original names.
+##### Examples
 
+This example uploads the 'froggy.tgz' file to the root of the *my-local-repo* repository
 ```console
-$ artifactory-cli-go upload --url=http://localhost:8081/artifactory --user=admin --password=password build/(*.zip) libs-release-local:zipFiles/{1}
+$ artifactory-cli-go upload froggy.tgz my-local-repo:/ --url=http://domain/artifactory --user=admin --password=password
 ```
+
+
+This example collects all the zip files located under the build directory (including sub-directories)
+   and uploads them to the *my-local-repo* repository, under the zipFiles folder, while keeping the files original names.
+   ```console
+   $ artifactory-cli-go upload build/*.zip libs-release-local:zipFiles/ --url=http://domain/artifactory --user=admin --password=password
+   ```
 
 #### The Download command
 
@@ -86,3 +93,15 @@ The command expects one argument - the path of files to be downloaded from Artif
 The argument should have the following format: [repository name]:[repository path]
 The path can include a single file or multiple files, by using the * wildcard.
 The artifacts are downloaded and saved to the current directory, while saving their folder structure.
+
+##### Examples
+
+This example downloads the *cool-froggy.zip* file located at the root of the *my-local-repo* repository to current directory.
+```console
+$ artifactory-cli-go download my-local-repo:cool-froggy.zip --url=http://domain/artifactory --user=admin --password=password
+```
+
+This example downloads all files located in the *my-local-repo* repository under the *all-my-frogs* folder to the *all-my-frog* directory located unde the current directory.
+```console
+$ artifactory-cli-go download my-local-repo:all-my-frogs/ --url=http://domain/artifactory --user=admin --password=password
+```

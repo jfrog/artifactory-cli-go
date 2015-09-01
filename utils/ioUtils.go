@@ -3,10 +3,23 @@ package utils
 import (
     "os"
 	"bytes"
+	"strings"
 	"net/http"
 	"io/ioutil"
     "path/filepath"
 )
+
+func GetFileNameFromPath(path string) string {
+    index := strings.LastIndex(path, "/")
+    if index != -1 {
+        return path[index+1:]
+    }
+    index = strings.LastIndex(path, "\\")
+    if index != -1 {
+        return path[index+1:]
+    }
+    return path
+}
 
 func IsDir(path string) bool {
     if !IsPathExists(path) {
@@ -69,7 +82,7 @@ func PutFile(filePath string, url string, user string, password string, dryRun b
     PutContent(content, nil, url, user, password, dryRun)
 }
 
-func DownloadFile(downloadPath string, localPath string, fileName string, flat bool, user string, password string) *http.Response {
+func DownloadFile(downloadPath string, localPath string, fileName string, flat bool, user string, password string, dryRun bool) *http.Response {
     if !flat && localPath != "" {
         os.MkdirAll(localPath ,0777)
         fileName = localPath + "/" + fileName
@@ -78,11 +91,13 @@ func DownloadFile(downloadPath string, localPath string, fileName string, flat b
     out, err := os.Create(fileName)
     CheckError(err)
     defer out.Close()
-    resp, body := SendGet(downloadPath, user, password)
-    out.Write(body)
-    CheckError(err)
-
-    return resp
+    if !dryRun {
+        resp, body := SendGet(downloadPath, user, password)
+        out.Write(body)
+        CheckError(err)
+        return resp
+    }
+    return nil
 }
 
 func SendPost(url string, data string, user string, password string) []byte {

@@ -18,7 +18,7 @@ func TryChecksumDeploy(fileContent []byte, targetPath string, user string, passw
     return PutContent(nil, headers, targetPath, user, password, dryRun)
 }
 
-func ShouldDownloadFile(localFilePath string, downloadPath string, user string, password string, dryRun bool) bool {
+func ShouldDownloadFile(localFilePath string, downloadPath string, user string, password string) bool {
     if !IsFileExists(localFilePath) {
         return true
     }
