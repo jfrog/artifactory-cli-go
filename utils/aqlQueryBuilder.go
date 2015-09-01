@@ -1,14 +1,13 @@
-package main
+package utils
 
 import (
   "strings"
-  "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
 func BuildAqlSearchQuery(searchPattern string) string {
     index := strings.Index(searchPattern, "/")
     if index == -1 {
-        utils.Exit("Invalid search pattern: " + searchPattern)
+        Exit("Invalid search pattern: " + searchPattern)
     }
 
     repo := searchPattern[:index]
