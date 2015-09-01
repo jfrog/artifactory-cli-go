@@ -12,6 +12,7 @@ var dryRun bool
 var url string
 var user string
 var password string
+var props string
 var flat bool
 var useRegExp bool
 
@@ -63,28 +64,36 @@ func GetFlags() []cli.Flag {
 
 func GetUploadFlags() []cli.Flag {
     flags := []cli.Flag{
-        nil,nil,nil,nil,nil,
+        nil,nil,nil,nil,nil,nil,
     }
     copy(flags[0:3], GetFlags())
-    flags[3] = cli.BoolFlag{
-         Name:  "dry-run",
-         Usage: "Set to true to disable communication with Artifactory",
+    flags[3] = cli.StringFlag{
+         Name:  "props",
+         Usage: "List of properties in the form of key1=value1;key2=value2,... to be attached to the uploaded artifacts.",
     }
     flags[4] = cli.BoolFlag{
+         Name:  "dry-run",
+         Usage: "Set to true to disable communication with Artifactory.",
+    }
+    flags[5] = cli.BoolFlag{
          Name:  "regexp",
-         Usage: "Set to true to use a regular expression instead of wildcards expression to collect files to upload",
+         Usage: "Set to true to use a regular expression instead of wildcards expression to collect files to upload.",
     }
     return flags
 }
 
 func GetDownloadFlags() []cli.Flag {
     flags := []cli.Flag{
-        nil,nil,nil,nil,
+        nil,nil,nil,nil,nil,
     }
     copy(flags[0:3], GetFlags())
-    flags[3] = cli.BoolFlag{
+    flags[3] = cli.StringFlag{
+         Name:  "props",
+         Usage: "List of properties in the form of key1=value1;key2=value2,... Only artifacts with these properties will be downloaded.",
+    }
+    flags[4] = cli.BoolFlag{
         Name:  "flat",
-        Usage: "Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded files",
+        Usage: "Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded files.",
     }
     return flags
 }
@@ -97,6 +106,7 @@ func InitFlags(c *cli.Context) {
 
     user = c.String("user")
     password = c.String("password")
+    props = c.String("props")
     dryRun = c.Bool("dry-run")
     flat = c.Bool("flat")
     useRegExp = c.Bool("regexp")
@@ -108,7 +118,7 @@ func Download(c *cli.Context) {
         utils.Exit("Wrong number of arguments. Try 'art download --help'.")
     }
     pattern := c.Args()[0]
-    commands.Download(url, pattern, user, password, flat, dryRun)
+    commands.Download(url, pattern, props, user, password, flat, dryRun)
 }
 
 func Upload(c *cli.Context) {
@@ -120,7 +130,7 @@ func Upload(c *cli.Context) {
     localPath := c.Args()[0]
     targetPath := c.Args()[1]
 
-    commands.Upload(url, localPath, targetPath, user, password, useRegExp, dryRun)
+    commands.Upload(url, localPath, targetPath, props, user, password, useRegExp, dryRun)
 }
 
 // Get a CLI flagg. If the flag does not exist, utils.Exit with a message.

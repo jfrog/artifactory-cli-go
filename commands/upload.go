@@ -8,12 +8,12 @@ import (
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-func Upload(url string, localPath string, targetPath string, user string, password string, useRegExp bool, dryRun bool) {
+func Upload(url string, localPath string, targetPath string, props string, user string, password string, useRegExp bool, dryRun bool) {
     artifacts := getFilesToUpload(localPath, targetPath, useRegExp)
 
     for _, artifact := range artifacts {
         target := url + artifact.TargetPath
-        uploadFile(artifact.LocalPath, target, user, password, dryRun)
+        uploadFile(artifact.LocalPath, target, props, user, password, dryRun)
     }
 }
 
@@ -123,7 +123,10 @@ func getRootPath(path string, useRegExp bool) string {
     return rootPath
 }
 
-func uploadFile(localPath string, targetPath string, user string, password string, dryRun bool) {
+func uploadFile(localPath string, targetPath string, props string, user string, password string, dryRun bool) {
+    if (props != "") {
+        targetPath += ";" + props
+    }
     print("Uploading artifact: " + targetPath + "...")
     fileContent := utils.ReadFile(localPath)
 

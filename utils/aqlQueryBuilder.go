@@ -4,7 +4,7 @@ import (
   "strings"
 )
 
-func BuildAqlSearchQuery(searchPattern string) string {
+func BuildAqlSearchQuery(searchPattern string, props string) string {
     index := strings.Index(searchPattern, "/")
     if index == -1 {
         Exit("Invalid search pattern: " + searchPattern)
@@ -19,18 +19,19 @@ func BuildAqlSearchQuery(searchPattern string) string {
     json :=
         "{" +
             "\"repo\": \"" + repo + "\"," +
+            buildPropsQuery(props) +
             "\"$or\": ["
 
     if Size == 0 {
         json +=
             "{" +
-                BuildInnerQuery(repo, ".", searchPattern) +
+                buildInnerQuery(repo, ".", searchPattern) +
             "}"
     } else {
         for i := 0; i < Size; i++ {
             json +=
                 "{" +
-                    BuildInnerQuery(repo, Pairs[i].Path, Pairs[i].File) +
+                    buildInnerQuery(repo, Pairs[i].Path, Pairs[i].File) +
                 "}"
 
             if (i+1 < Size) {
@@ -48,7 +49,26 @@ func BuildAqlSearchQuery(searchPattern string) string {
     return "items.find(" + json + ")"
 }
 
-func BuildInnerQuery(repo string, path string, name string) string {
+func buildPropsQuery(props string) string {
+    if props == "" {
+        return ""
+    }
+    propList := strings.Split(props, ";")
+    query := ""
+    for _, prop := range propList {
+        keyVal := strings.Split(prop, "=")
+        if len(keyVal) != 2 {
+            Exit("Invalid props pattern: " + props)
+        }
+        key := keyVal[0]
+        value := keyVal[1]
+        query +=
+            "\"@" + key + "\": {\"$match\" : \"" + value + "\"},"
+    }
+    return query
+}
+
+func buildInnerQuery(repo string, path string, name string) string {
     query :=
         "\"$and\": [{" +
             "\"path\": {" +

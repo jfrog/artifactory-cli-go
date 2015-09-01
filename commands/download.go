@@ -6,13 +6,13 @@ import (
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-func Download(url string, downloadPattern string, user string, password string, flat bool, dryRun bool) {
+func Download(url string, downloadPattern string, props string, user string, password string, flat bool, dryRun bool) {
     aqlUrl := url + "api/search/aql"
     if strings.HasSuffix(downloadPattern, "/") {
         downloadPattern += "*"
     }
 
-    data := utils.BuildAqlSearchQuery(downloadPattern)
+    data := utils.BuildAqlSearchQuery(downloadPattern, props)
 
     println("AQL query: " + data)
 
