@@ -4,6 +4,7 @@ import (
   "strings"
   "regexp"
   "strconv"
+  "runtime"
   "net/http"
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
@@ -38,8 +39,14 @@ func prepareLocalPath(localpath string, useRegExp bool) string {
 }
 
 func localPathToRegExp(localpath string) string {
+    var wildcard string
+    if runtime.GOOS == "windows" {
+        wildcard = ".*"
+    } else {
+        wildcard = ".\\*"
+    }
     localpath = strings.Replace(localpath, ".", "\\.", -1)
-    localpath = strings.Replace(localpath, "*", ".*", -1)
+    localpath = strings.Replace(localpath, "*", wildcard, -1)
     return localpath
 }
 

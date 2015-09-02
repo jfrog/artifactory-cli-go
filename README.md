@@ -48,14 +48,14 @@ Used to upload artifacts to Artifactory.
    --user       [Optional] Artifactory user.
    --password   [Optional] Artifactory password.
    --props      [Optional] List of properties in the form of key1=value1;key2=value2,... to be attached to the uploaded artifacts.
-   --flat       [Default: false] If not set to true, and the upload path ends with a slash, files are uploaded according to their file system hierarchy.
+   --flat       [Default: false] If not set to true, and the upload path ends with a slash, artifacts are uploaded according to their file system hierarchy.
    --recursive  [Default: true] Set to false if you do not wish to collect artifacts in sub-folders to be uploaded to Artifactory.
-   --regexp     [Default: false] Set to true to use a regular expression instead of wildcards expression to collect files to upload.
+   --regexp     [Default: false] Set to true to use a regular expression instead of wildcards expression to collect artifacts to upload.
    --dry-run    [Default: false] Set to true to disable communication with Artifactory.
 ```
 ##### Arguments
-* The first argument is the path to the files to be uploaded to Artifactory.
-The path can include a single file or multiple files, by using the * wildcard.
+* The first argument is the path to the artifacts to be uploaded to Artifactory.
+The path can include a single file or multiple artifacts, by using the * wildcard.
 **Important:** If the path is provided as a regular expression (with the --regexp=true option) then
 the first regular expression appearing as part of the argument must be enclosed in parenthesis.
 
@@ -72,8 +72,8 @@ $ artifactory-cli-go upload froggy.tgz my-local-repo/ --url=http://domain/artifa
 ```
 
 
-This example collects all the zip files located under the build directory (including sub-directories)
-   and uploads them to the *my-local-repo* repository, under the zipFiles folder, while keeping the files original names.
+This example collects all the zip artifacts located under the build directory (including sub-directories)
+   and uploads them to the *my-local-repo* repository, under the zipFiles folder, while keeping the artifacts original names.
    ```console
 $ artifactory-cli-go upload build/*.zip libs-release-local/zipFiles/ --url=http://domain/artifactory --user=admin --password=password
    ```
@@ -89,24 +89,24 @@ Used to download artifacts from Artifactory.
    --user       [Optional] Artifactory user
    --password   [Optional] Artifactory password
    --props      [Optional] List of properties in the form of key1=value1;key2=value2,... Only artifacts with these properties will be downloaded.
-   --flat       [Default: false] Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded files
-   --recursive  [Default: true] Set to false if you do not wish to include the download of artifacts inside sub-folders in Artifactory.
+   --flat       [Default: false] Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded artifacts
+   --recursive  [Default: true] Set to false if you do not wish to include the download of artifacts inside sub-directories in Artifactory.
 ```
 
 ##### Arguments
-The command expects one argument - the path of files to be downloaded from Artifactory.
+The command expects one argument - the path of artifacts to be downloaded from Artifactory.
 The argument should have the following format: [repository name]:[repository path]
-The path can include a single file or multiple files, by using the * wildcard.
+The path can include a single artifact or multiple artifacts, by using the * wildcard.
 The artifacts are downloaded and saved to the current directory, while saving their folder structure.
 
 ##### Examples
 
-This example downloads the *cool-froggy.zip* file located at the root of the *my-local-repo* repository to current directory.
+This example downloads the *cool-froggy.zip* artifact located at the root of the *my-local-repo* repository to current directory.
 ```console
 $ artifactory-cli-go download my-local-repo/cool-froggy.zip --url=http://domain/artifactory --user=admin --password=password
 ```
 
-This example downloads all files located in the *my-local-repo* repository under the *all-my-frogs* folder to the *all-my-frog* directory located unde the current directory.
+This example downloads all artifacts located in the *my-local-repo* repository under the *all-my-frogs* folder to the *all-my-frog* directory located unde the current directory.
 ```console
 $ artifactory-cli-go download my-local-repo/all-my-frogs/ --url=http://domain/artifactory --user=admin --password=password
 ```

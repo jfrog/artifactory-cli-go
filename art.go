@@ -27,7 +27,7 @@ func main() {
             Name: "upload",
             Flags: GetUploadFlags(),
             Aliases: []string{"u"},
-            Usage: "upload <local path> <repo name:repo path>",
+            Usage: "upload <local path> <repo path>",
             Action: func(c *cli.Context) {
                 Upload(c)
             },
