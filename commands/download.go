@@ -6,13 +6,13 @@ import (
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-func Download(url string, downloadPattern string, props string, user string, password string, flat bool, dryRun bool) {
+func Download(url string, downloadPattern string, recursive bool, props string, user string, password string, flat bool, dryRun bool) {
     aqlUrl := url + "api/search/aql"
     if strings.HasSuffix(downloadPattern, "/") {
         downloadPattern += "*"
     }
 
-    data := utils.BuildAqlSearchQuery(downloadPattern, props)
+    data := utils.BuildAqlSearchQuery(downloadPattern, recursive, props)
 
     println("AQL query: " + data)
 
@@ -21,11 +21,11 @@ func Download(url string, downloadPattern string, props string, user string, pas
     size := len(resultItems)
 
     for i := 0; i < size; i++ {
-        downloadPath := url + resultItems[i].Repo + "/" + resultItems[i].Path + "/" + resultItems[i].Name
+        downloadPath := buildDownloadUrl(url, resultItems[i])
         print("Downloading " + downloadPath + "...")
 
         localFilePath := resultItems[i].Path + "/" + resultItems[i].Name
-        if utils.ShouldDownloadFile(localFilePath, downloadPath, user, password) {
+        if shouldDownloadFile(localFilePath, downloadPath, user, password) {
             resp := utils.DownloadFile(downloadPath, resultItems[i].Path, resultItems[i].Name, flat, user, password, dryRun)
             if !dryRun {
                 println("Artifactory response:", resp.Status)
@@ -36,6 +36,25 @@ func Download(url string, downloadPattern string, props string, user string, pas
             println("File already exists locally.")
         }
     }
+}
+
+func buildDownloadUrl(baseUrl string, resultItem AqlSearchResultItem) string {
+    if resultItem.Path == "." {
+        return baseUrl + resultItem.Repo + "/" + resultItem.Name
+    }
+    return baseUrl + resultItem.Repo + "/" + resultItem.Path + "/" + resultItem.Name
+}
+
+func shouldDownloadFile(localFilePath string, downloadPath string, user string, password string) bool {
+    if !utils.IsFileExists(localFilePath) {
+        return true
+    }
+    localChecksum := utils.CalcChecksum(utils.ReadFile(localFilePath))
+    artifactoryChecksum := utils.FetchChecksumFromArtifactory(downloadPath, user, password)
+    if localChecksum.Md5 != artifactoryChecksum.Md5 || localChecksum.Sha1 != artifactoryChecksum.Sha1 {
+       return true
+    }
+    return false
 }
 
 func parseAqlSearchResponse(resp []byte) []AqlSearchResultItem {

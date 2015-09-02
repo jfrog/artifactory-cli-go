@@ -44,11 +44,14 @@ Used to upload artifacts to Artifactory.
 
 ##### Options
 ```console
-   --url        Artifactory URL
-   --user       Artifactory user
-   --password   Artifactory password
-   --dry-run    Set to true to disable communication with Artifactory
-   --regexp     Set to true to use a regular expression instead of wildcards expression to collect files to upload
+   --url        [Mandatory] Artifactory URL.
+   --user       [Optional] Artifactory user.
+   --password   [Optional] Artifactory password.
+   --props      [Optional] List of properties in the form of key1=value1;key2=value2,... to be attached to the uploaded artifacts.
+   --flat       [Default: false] If not set to true, and the upload path ends with a slash, files are uploaded according to their file system hierarchy.
+   --recursive  [Default: true] Set to false if you do not wish to collect artifacts in sub-folders to be uploaded to Artifactory.
+   --regexp     [Default: false] Set to true to use a regular expression instead of wildcards expression to collect files to upload.
+   --dry-run    [Default: false] Set to true to disable communication with Artifactory.
 ```
 ##### Arguments
 * The first argument is the path to the files to be uploaded to Artifactory.
@@ -82,10 +85,12 @@ Used to download artifacts from Artifactory.
 
 ##### Options
 ```console
-   --url        Artifactory URL
-   --user       Artifactory user
-   --password   Artifactory password
-   --flat       Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded files
+   --url        [Mandatory] Artifactory URL
+   --user       [Optional] Artifactory user
+   --password   [Optional] Artifactory password
+   --props      [Optional] List of properties in the form of key1=value1;key2=value2,... Only artifacts with these properties will be downloaded.
+   --flat       [Default: false] Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded files
+   --recursive  [Default: true] Set to false if you do not wish to include the download of artifacts inside sub-folders in Artifactory.
 ```
 
 ##### Arguments

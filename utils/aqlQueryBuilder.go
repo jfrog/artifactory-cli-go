@@ -4,7 +4,7 @@ import (
   "strings"
 )
 
-func BuildAqlSearchQuery(searchPattern string, props string) string {
+func BuildAqlSearchQuery(searchPattern string, recursive bool, props string) string {
     index := strings.Index(searchPattern, "/")
     if index == -1 {
         Exit("Invalid search pattern: " + searchPattern)
@@ -13,8 +13,8 @@ func BuildAqlSearchQuery(searchPattern string, props string) string {
     repo := searchPattern[:index]
     searchPattern = searchPattern[index+1:]
 
-    Pairs := CreatePathFilePairs(searchPattern)
-    Size := len(Pairs)
+    pairs := createPathFilePairs(searchPattern, recursive)
+    size := len(pairs)
 
     json :=
         "{" +
@@ -22,29 +22,27 @@ func BuildAqlSearchQuery(searchPattern string, props string) string {
             buildPropsQuery(props) +
             "\"$or\": ["
 
-    if Size == 0 {
+    if size == 0 {
         json +=
             "{" +
                 buildInnerQuery(repo, ".", searchPattern) +
             "}"
     } else {
-        for i := 0; i < Size; i++ {
+        for i := 0; i < size; i++ {
             json +=
                 "{" +
-                    buildInnerQuery(repo, Pairs[i].Path, Pairs[i].File) +
+                    buildInnerQuery(repo, pairs[i].path, pairs[i].file) +
                 "}"
 
-            if (i+1 < Size) {
+            if (i+1 < size) {
                 json += ","
             }
         }
     }
 
-
     json +=
             "]" +
         "}"
-
 
     return "items.find(" + json + ")"
 }
@@ -82,63 +80,77 @@ func buildInnerQuery(repo string, path string, name string) string {
     return query
 }
 
-func CreatePathFilePairs(pattern string) []PathFilePair {
-    Pairs := []PathFilePair{}
+// We need to translate the provided download pattern to an AQL query.
+// In Artifactory, for each artifact the name and path of the artifact are saved separately.
+// We therefore need to build an AQL query that covers all possible paths and names the provided
+// pattern can include.
+// For example, the pattern a/* can include the two following files:
+// a/file1.tgz and also a/b/file2.tgz
+// To achieve that, this function parses the pattern by splitting it by its * characters.
+// The end result is a list of PathFilePair structs.
+// Each struct represent a possible path and file name pair to be included in AQL query with an "or" relationship.
+func createPathFilePairs(pattern string, recursive bool) []PathFilePair {
+    pairs := []PathFilePair{}
     if (pattern == "*") {
-        Pairs = append(Pairs, PathFilePair{"*", "*"})
-        return Pairs
+        if recursive {
+            pairs = append(pairs, PathFilePair{"*", "*"})
+        } else {
+            pairs = append(pairs, PathFilePair{".", "*"})
+        }
+        return pairs
     }
 
     Index := strings.LastIndex(pattern, "/")
-    Path := ""
+    path := ""
     if (Index > 0) {
-        Path = pattern[0:Index]
-        Name := pattern[Index+1:]
-        Pairs = append(Pairs, PathFilePair{Path, Name})
-        pattern = Name
+        path = pattern[0:Index]
+        name := pattern[Index+1:]
+        pairs = append(pairs, PathFilePair{path, name})
+        if !recursive {
+            return pairs
+        }
+        if name == "*" {
+            path += "/*"
+            pairs = append(pairs, PathFilePair{path, "*"})
+            return pairs
+        }
+        pattern = name
     }
 
-    Sections := strings.Split(pattern, "*")
-    Size := len(Sections)
+    sections := strings.Split(pattern, "*")
+    size := len(sections)
 
-    for i := 0; i < Size; i++ {
-        if (Sections[i] == "") {
+    for i := 0; i < size; i++ {
+        if (sections[i] == "") {
             continue
         }
-
-        Options := []string{}
+        options := []string{}
         if (i > 0) {
-            Options = append(Options, "/" + Sections[i])
+            options = append(options, "/" + sections[i])
         }
-        if (i+1 < Size) {
-            Options = append(Options, Sections[i] + "/")
+        if (i+1 < size) {
+            options = append(options, sections[i] + "/")
         }
-
-        for _, Option := range Options {
-            Str := ""
-            for j := 0; j < Size; j++ {
+        for _, option := range options {
+            str := ""
+            for j := 0; j < size; j++ {
                 if (j > 0) {
-                    Str += "*"
+                    str += "*"
                 }
                 if (j == i) {
-                    Str += Option
+                    str += option
                 } else {
-                    Str += Sections[j]
+                    str += sections[j]
                 }
             }
-            Split := strings.Split(Str, "/")
-
-            if (Path != "") {
-                Path += "/"
-            }
-            Pairs = append(Pairs, PathFilePair{Path + Split[0], Split[1]})
+            split := strings.Split(str, "/")
+            pairs = append(pairs, PathFilePair{path + split[0], split[1]})
         }
     }
-
-    return Pairs
+    return pairs
 }
 
 type PathFilePair struct {
-    Path string
-    File string
+    path string
+    file string
 }

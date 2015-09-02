@@ -1,34 +1,10 @@
 package utils
 
 import (
-	"net/http"
     "crypto/md5"
     "crypto/sha1"
     "encoding/hex"
 )
-
-func TryChecksumDeploy(fileContent []byte, targetPath string, user string, password string, dryRun bool) *http.Response {
-    checksum := CalcChecksum(fileContent)
-
-    headers := make(map[string]string)
-    headers["X-Checksum-Deploy"] = "true"
-    headers["X-Checksum-Sha1"] = checksum.Sha1
-    headers["X-Checksum-Md5"] = checksum.Md5
-
-    return PutContent(nil, headers, targetPath, user, password, dryRun)
-}
-
-func ShouldDownloadFile(localFilePath string, downloadPath string, user string, password string) bool {
-    if !IsFileExists(localFilePath) {
-        return true
-    }
-    localChecksum := CalcChecksum(ReadFile(localFilePath))
-    artifactoryChecksum := FetchChecksumFromArtifactory(downloadPath, user, password)
-    if localChecksum.Md5 != artifactoryChecksum.Md5 || localChecksum.Sha1 != artifactoryChecksum.Sha1 {
-       return true
-    }
-    return false
-}
 
 func CalcChecksum(data []byte) *CheckSum {
     checksum := new(CheckSum)

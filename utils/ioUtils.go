@@ -135,13 +135,26 @@ func Send(method string, url string, data string, user string, password string) 
     return resp, body
 }
 
-// Return the list of all files and directories (recursive) in the specified path
-func ListFiles(path string) []string {
+// Return the recursive list of files and directories in the specified path
+func ListFilesRecursive(path string) []string {
     fileList := []string{}
     err := filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
         fileList = append(fileList, path)
         return nil
     })
     CheckError(err)
+    return fileList
+}
+
+// Return the list of files and directories in the specified path
+func ListFiles(path string) []string {
+    if !strings.HasSuffix(path, "/") {
+        path += "/"
+    }
+    fileList := []string{}
+    files, _ := ioutil.ReadDir("./")
+    for _, f := range files {
+        fileList = append(fileList, path + f.Name())
+    }
     return fileList
 }

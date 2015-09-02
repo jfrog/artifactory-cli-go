@@ -8,13 +8,20 @@ import (
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-func Upload(url string, localPath string, targetPath string, props string, user string, password string, useRegExp bool, dryRun bool) {
-    artifacts := getFilesToUpload(localPath, targetPath, useRegExp)
+func Upload(url string, localPath string, targetPath string, recursive bool, flat bool, props string, user string, password string, useRegExp bool, dryRun bool) {
+    artifacts := getFilesToUpload(localPath, targetPath, recursive, flat, useRegExp)
 
     for _, artifact := range artifacts {
         target := url + artifact.TargetPath
         uploadFile(artifact.LocalPath, target, props, user, password, dryRun)
     }
+}
+
+func prepareUploadPath(path string) string {
+    path = strings.Replace(path, "\\", "/", -1)
+    path = strings.Replace(path, "../", "", -1)
+    path = strings.Replace(path, "./", "", -1)
+    return path
 }
 
 func prepareLocalPath(localpath string, useRegExp bool) string {
@@ -36,7 +43,7 @@ func localPathToRegExp(localpath string) string {
     return localpath
 }
 
-func getFilesToUpload(localpath string, targetPath string, useRegExp bool) []Artifact {
+func getFilesToUpload(localpath string, targetPath string, recursive bool, flat bool, useRegExp bool) []Artifact {
     rootPath := getRootPath(localpath, useRegExp)
     if !utils.IsPathExists(rootPath) {
         utils.Exit("Path does not exist: " + rootPath)
@@ -52,7 +59,13 @@ func getFilesToUpload(localpath string, targetPath string, useRegExp bool) []Art
     r, err := regexp.Compile(localpath)
     utils.CheckError(err)
 
-    paths := utils.ListFiles(rootPath)
+    var paths []string
+    if recursive {
+        paths = utils.ListFilesRecursive(rootPath)
+    } else {
+        paths = utils.ListFiles(rootPath)
+    }
+
     for _, path := range paths {
         if utils.IsDir(path) {
             continue
@@ -67,7 +80,12 @@ func getFilesToUpload(localpath string, targetPath string, useRegExp bool) []Art
                 target = strings.Replace(target, "{" + strconv.Itoa(i) + "}", group, -1)
             }
             if strings.HasSuffix(target, "/") {
-                target += utils.GetFileNameFromPath(path)
+                if flat {
+                    target += utils.GetFileNameFromPath(path)
+                } else {
+                    uploadPath := prepareUploadPath(path)
+                    target += uploadPath
+                }
             }
             artifacts = append(artifacts, Artifact{path, target})
         }
@@ -83,21 +101,6 @@ func getRootPath(path string, useRegExp bool) string {
     if len(sections) == 1 {
         seperator = "\\"
         sections = strings.Split(path, seperator)
-    }
-
-    // If we got only one section, meaning no file seperators, we should return "." if it is a pattern
-    // or if it is not a pattern, return it as is.
-    if len(sections) == 1 {
-        if useRegExp {
-            if strings.Index(path, "(") != -1 {
-                return "."
-            }
-        } else {
-            if strings.Index(path, "*") != -1 {
-                return "."
-            }
-        }
-        return path
     }
 
     // Now we start building the root path, making sure to leave out the sub-directory that includes the pattern.
@@ -120,6 +123,9 @@ func getRootPath(path string, useRegExp bool) string {
         }
         rootPath += section
     }
+    if rootPath == "" {
+        return "."
+    }
     return rootPath
 }
 
@@ -133,7 +139,7 @@ func uploadFile(localPath string, targetPath string, props string, user string, 
     var deployed bool = false
     var resp *http.Response
     if len(fileContent) >= 10240 {
-        resp = utils.TryChecksumDeploy(fileContent, targetPath, user, password, dryRun)
+        resp = tryChecksumDeploy(fileContent, targetPath, user, password, dryRun)
         deployed = !dryRun && (resp.StatusCode == 201 || resp.StatusCode == 200)
     }
     if !deployed {
@@ -144,6 +150,17 @@ func uploadFile(localPath string, targetPath string, props string, user string, 
     } else {
         println()
     }
+}
+
+func tryChecksumDeploy(fileContent []byte, targetPath string, user string, password string, dryRun bool) *http.Response {
+    checksum := utils.CalcChecksum(fileContent)
+
+    headers := make(map[string]string)
+    headers["X-Checksum-Deploy"] = "true"
+    headers["X-Checksum-Sha1"] = checksum.Sha1
+    headers["X-Checksum-Md5"] = checksum.Md5
+
+    return utils.PutContent(nil, headers, targetPath, user, password, dryRun)
 }
 
 type Artifact struct {

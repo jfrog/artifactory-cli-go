@@ -13,6 +13,7 @@ var url string
 var user string
 var password string
 var props string
+var recursive bool
 var flat bool
 var useRegExp bool
 
@@ -49,51 +50,65 @@ func GetFlags() []cli.Flag {
     return []cli.Flag{
         cli.StringFlag{
          Name:  "url",
-         Usage: "Artifactory URL",
+         Usage: "[Mandatiry] Artifactory URL",
         },
         cli.StringFlag{
          Name:  "user",
-         Usage: "Artifactory user",
+         Usage: "[Optional] Artifactory user",
         },
         cli.StringFlag{
          Name:  "password",
-         Usage: "Artifactory password",
+         Usage: "[Optional] Artifactory password",
         },
     }
 }
 
 func GetUploadFlags() []cli.Flag {
     flags := []cli.Flag{
-        nil,nil,nil,nil,nil,nil,
+        nil,nil,nil,nil,nil,nil,nil,nil,
     }
     copy(flags[0:3], GetFlags())
     flags[3] = cli.StringFlag{
          Name:  "props",
-         Usage: "List of properties in the form of key1=value1;key2=value2,... to be attached to the uploaded artifacts.",
+         Usage: "[Optional] List of properties in the form of key1=value1;key2=value2,... to be attached to the uploaded artifacts.",
     }
-    flags[4] = cli.BoolFlag{
-         Name:  "dry-run",
-         Usage: "Set to true to disable communication with Artifactory.",
+    flags[4] = cli.StringFlag{
+        Name:  "recursive",
+        Value:  "",
+        Usage: "[Default: true] Set to false if you do not wish to collect artifacts in sub-folders to be uploaded to Artifactory.",
     }
     flags[5] = cli.BoolFlag{
+        Name:  "flat",
+        Usage: "[Default: false] If not set to true, and the upload path ends with a slash, files are uploaded according to their file system hierarchy.",
+    }
+    flags[6] = cli.BoolFlag{
          Name:  "regexp",
-         Usage: "Set to true to use a regular expression instead of wildcards expression to collect files to upload.",
+         Usage: "[Default: false] Set to true to use a regular expression instead of wildcards expression to collect files to upload.",
+    }
+    flags[7] = cli.BoolFlag{
+         Name:  "dry-run",
+         Usage: "[Default: false] Set to true to disable communication with Artifactory.",
     }
     return flags
 }
 
 func GetDownloadFlags() []cli.Flag {
     flags := []cli.Flag{
-        nil,nil,nil,nil,nil,
+        nil,nil,nil,nil,nil,nil,
     }
     copy(flags[0:3], GetFlags())
     flags[3] = cli.StringFlag{
          Name:  "props",
-         Usage: "List of properties in the form of key1=value1;key2=value2,... Only artifacts with these properties will be downloaded.",
+         Usage: "[Optional] List of properties in the form of key1=value1;key2=value2,... Only artifacts with these properties will be downloaded.",
     }
-    flags[4] = cli.BoolFlag{
+    flags[4] = cli.StringFlag{
+        Name:  "recursive",
+        Value:  "",
+        Usage: "[Default: true] Set to false if you do not wish to include the download of artifacts inside sub-folders in Artifactory.",
+    }
+    flags[5] = cli.BoolFlag{
         Name:  "flat",
-        Usage: "Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded files.",
+        Usage: "[Default: false] Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded files.",
     }
     return flags
 }
@@ -110,6 +125,12 @@ func InitFlags(c *cli.Context) {
     dryRun = c.Bool("dry-run")
     flat = c.Bool("flat")
     useRegExp = c.Bool("regexp")
+
+    if c.String("recursive") == "" {
+        recursive = true
+    } else {
+        recursive = c.Bool("recursive")
+    }
 }
 
 func Download(c *cli.Context) {
@@ -118,7 +139,7 @@ func Download(c *cli.Context) {
         utils.Exit("Wrong number of arguments. Try 'art download --help'.")
     }
     pattern := c.Args()[0]
-    commands.Download(url, pattern, props, user, password, flat, dryRun)
+    commands.Download(url, pattern, recursive, props, user, password, flat, dryRun)
 }
 
 func Upload(c *cli.Context) {
@@ -129,8 +150,7 @@ func Upload(c *cli.Context) {
     }
     localPath := c.Args()[0]
     targetPath := c.Args()[1]
-
-    commands.Upload(url, localPath, targetPath, props, user, password, useRegExp, dryRun)
+    commands.Upload(url, localPath, targetPath, recursive, flat, props, user, password, useRegExp, dryRun)
 }
 
 // Get a CLI flagg. If the flag does not exist, utils.Exit with a message.
