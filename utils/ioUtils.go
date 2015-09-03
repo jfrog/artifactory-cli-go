@@ -4,6 +4,8 @@ import (
     "os"
 	"bytes"
 	"strings"
+	"strconv"
+	"sync"
 	"net/http"
 	"io/ioutil"
     "path/filepath"
@@ -50,39 +52,17 @@ func ReadFile(filePath string) []byte {
 	return content
 }
 
-// Sends an HTTP PUT request to the specified URL, sending the specified content.
-func PutContent(content []byte, headers map[string]string, url string, user string, password string, dryRun bool) *http.Response {
-	if dryRun {
-        return nil
-	}
-	var data *bytes.Buffer = bytes.NewBufferString("")
-	if content != nil {
-	    data = bytes.NewBuffer(content)
-	}
-    req, err := http.NewRequest("PUT", url, data)
-    if user != "" && password != "" {
-	    req.SetBasicAuth(user, password)
-    }
-    for name := range headers {
-        req.Header.Set(name, headers[name])
-    }
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    CheckError(err)
-    defer resp.Body.Close()
-
-    return resp
-}
-
 // Sends an HTTP PUT request to the specified URL, sending the file in the
 // specified path.
 func PutFile(filePath string, url string, user string, password string, dryRun bool) {
 	content, err := ioutil.ReadFile(filePath)
 	CheckError(err)
-    PutContent(content, nil, url, user, password, dryRun)
+	if !dryRun {
+        SendPut(url, content, nil, user, password)
+	}
 }
 
-func DownloadFile(downloadPath string, localPath string, fileName string, flat bool, user string, password string, dryRun bool) *http.Response {
+func DownloadFile(downloadPath string, localPath string, fileName string, flat bool, user string, password string) *http.Response {
     if !flat && localPath != "" {
         os.MkdirAll(localPath ,0777)
         fileName = localPath + "/" + fileName
@@ -91,33 +71,91 @@ func DownloadFile(downloadPath string, localPath string, fileName string, flat b
     out, err := os.Create(fileName)
     CheckError(err)
     defer out.Close()
-    if !dryRun {
-        resp, body := SendGet(downloadPath, user, password)
-        out.Write(body)
-        CheckError(err)
-        return resp
-    }
+    resp, body := SendGet(downloadPath, nil, user, password)
+    out.Write(body)
+    CheckError(err)
+    return resp
     return nil
 }
 
-func SendPost(url string, data string, user string, password string) []byte {
-    _, body := Send("POST", url, data, user, password)
+func DownloadFileConcurrently(downloadPath string, localPath string, fileName string, flat bool, user string, password string, fileSize int) {
+    Threads := 3
+    TempDirName := "C:\\temp\\art_cli_temp"
+    tempLoclPath := TempDirName + "/" + localPath
+
+    var wg sync.WaitGroup
+    chunkSize := fileSize / Threads
+    mod := fileSize % Threads
+
+    for i := 0; i < Threads ; i++ {
+        wg.Add(1)
+        start := chunkSize * i
+        end := chunkSize * (i + 1)
+        if i == Threads-1 {
+            end += mod
+        }
+        go func(start int, end int, i int) {
+            headers := make(map[string]string)
+            headers["Range"] = "bytes=" + strconv.Itoa(start) +"-" + strconv.Itoa(end-1)
+            resp, body := SendGet(downloadPath, headers, user, password)
+
+            print("[" + strconv.Itoa(i) + "]:", resp.Status + "...")
+
+            os.MkdirAll(tempLoclPath ,0777)
+            filePath := tempLoclPath + "/" + fileName + "_" + strconv.Itoa(i)
+
+            out, err := os.Create(filePath)
+            CheckError(err)
+            defer out.Close()
+
+            out.Write(body)
+            CheckError(err)
+            wg.Done()
+        }(start, end, i)
+    }
+    wg.Wait()
+
+    if !flat && localPath != "" {
+        os.MkdirAll(localPath ,0777)
+        fileName = localPath + "/" + fileName
+    }
+
+    out, err := os.Create(fileName)
+    CheckError(err)
+    defer out.Close()
+
+    for i := 0; i < Threads ; i++ {
+        tempFilePath := TempDirName + "/" + fileName + "_" + strconv.Itoa(i)
+        content := ReadFile(tempFilePath)
+        out.Write(content)
+        CheckError(err)
+    }
+    println("Done downloading.")
+}
+
+func SendPut(url string, content []byte, headers map[string]string, user string, password string) (*http.Response, []byte) {
+    return Send("PUT", url, content, headers, user, password)
+}
+
+func SendPost(url string, content []byte, user string, password string) []byte {
+    _, body := Send("POST", url, content, nil, user, password)
     return body
 }
 
-func SendGet(url string, user string, password string) (*http.Response, []byte) {
-    return Send("GET", url, "", user, password)
+func SendGet(url string, headers map[string]string, user string, password string) (*http.Response, []byte) {
+    return Send("GET", url, nil, headers, user, password)
 }
 
 func SendHead(url string, user string, password string) (*http.Response, []byte) {
-    return Send("HEAD", url, "", user, password)
+    return Send("HEAD", url, nil, nil, user, password)
 }
 
-func Send(method string, url string, data string, user string, password string) (*http.Response, []byte) {
+func Send(method string, url string, content []byte, headers map[string]string, user string, password string) (*http.Response, []byte) {
     var req *http.Request
     var err error
-    if data != "" {
-        req, err = http.NewRequest(method, url, bytes.NewBuffer([]byte(data)))
+
+    if content != nil {
+        req, err = http.NewRequest(method, url, bytes.NewBuffer(content))
     } else {
         req, err = http.NewRequest(method, url, nil)
     }
@@ -126,7 +164,11 @@ func Send(method string, url string, data string, user string, password string) 
     if user != "" && password != "" {
 	    req.SetBasicAuth(user, password)
     }
-
+    if headers != nil {
+        for name := range headers {
+            req.Header.Set(name, headers[name])
+        }
+    }
     client := &http.Client{}
     resp, err := client.Do(req)
     CheckError(err)

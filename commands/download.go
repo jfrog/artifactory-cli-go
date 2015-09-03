@@ -6,6 +6,8 @@ import (
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
+var MinConcurrentDownloadSize = 1 // 10240000
+
 func Download(url string, downloadPattern string, recursive bool, props string, user string, password string, flat bool, dryRun bool) {
     aqlUrl := url + "api/search/aql"
     if strings.HasSuffix(downloadPattern, "/") {
@@ -16,24 +18,31 @@ func Download(url string, downloadPattern string, recursive bool, props string, 
 
     println("AQL query: " + data)
 
-    json := utils.SendPost(aqlUrl, data, user, password)
+    json := utils.SendPost(aqlUrl, []byte(data), user, password)
     resultItems := parseAqlSearchResponse(json)
+    downloadFiles(resultItems, url, user, password, flat, dryRun)
+}
+
+func downloadFiles(resultItems []AqlSearchResultItem, url string, user string, password string, flat bool, dryRun bool) {
     size := len(resultItems)
 
     for i := 0; i < size; i++ {
         downloadPath := buildDownloadUrl(url, resultItems[i])
         print("Downloading " + downloadPath + "...")
 
-        localFilePath := resultItems[i].Path + "/" + resultItems[i].Name
-        if shouldDownloadFile(localFilePath, downloadPath, user, password) {
-            resp := utils.DownloadFile(downloadPath, resultItems[i].Path, resultItems[i].Name, flat, user, password, dryRun)
-            if !dryRun {
-                println("Artifactory response:", resp.Status)
+        if !dryRun {
+            artifactoryFileDetails := utils.GetFileDetailsFromArtifactory(downloadPath, user, password)
+            localFilePath := resultItems[i].Path + "/" + resultItems[i].Name
+            if shouldDownloadFile(localFilePath, artifactoryFileDetails, user, password) {
+                if artifactoryFileDetails.Size < MinConcurrentDownloadSize {
+                    resp := utils.DownloadFile(downloadPath, resultItems[i].Path, resultItems[i].Name, flat, user, password)
+                    println("Artifactory response:", resp.Status)
+                } else {
+                    utils.DownloadFileConcurrently(downloadPath, resultItems[i].Path, resultItems[i].Name, flat, user, password, artifactoryFileDetails.Size)
+                }
             } else {
-                println()
+                println("File already exists locally.")
             }
-        } else {
-            println("File already exists locally.")
         }
     }
 }
@@ -45,13 +54,12 @@ func buildDownloadUrl(baseUrl string, resultItem AqlSearchResultItem) string {
     return baseUrl + resultItem.Repo + "/" + resultItem.Path + "/" + resultItem.Name
 }
 
-func shouldDownloadFile(localFilePath string, downloadPath string, user string, password string) bool {
+func shouldDownloadFile(localFilePath string, artifactoryFileDetails *utils.FileDetails, user string, password string) bool {
     if !utils.IsFileExists(localFilePath) {
         return true
     }
-    localChecksum := utils.CalcChecksum(utils.ReadFile(localFilePath))
-    artifactoryChecksum := utils.FetchChecksumFromArtifactory(downloadPath, user, password)
-    if localChecksum.Md5 != artifactoryChecksum.Md5 || localChecksum.Sha1 != artifactoryChecksum.Sha1 {
+    localFileDetails := utils.GetFileDetails(utils.ReadFile(localFilePath))
+    if localFileDetails.Md5 != artifactoryFileDetails.Md5 || localFileDetails.Sha1 != artifactoryFileDetails.Sha1 {
        return true
     }
     return false
