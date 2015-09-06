@@ -11,6 +11,8 @@ import (
     "path/filepath"
 )
 
+var tempDirPath string
+
 func GetFileNameFromPath(path string) string {
     index := strings.LastIndex(path, "/")
     if index != -1 {
@@ -44,6 +46,15 @@ func IsFileExists(path string) bool {
     f, err := os.Stat(path)
     CheckError(err)
     return !f.IsDir()
+}
+
+func IsDirExists(path string) bool {
+    if !IsPathExists(path) {
+        return false
+    }
+    f, err := os.Stat(path)
+    CheckError(err)
+    return f.IsDir()
 }
 
 func ReadFile(filePath string) []byte {
@@ -80,8 +91,7 @@ func DownloadFile(downloadPath string, localPath string, fileName string, flat b
 
 func DownloadFileConcurrently(downloadPath string, localPath string, fileName string, flat bool, user string, password string, fileSize int) {
     Threads := 3
-    TempDirName := "C:\\temp\\art_cli_temp"
-    tempLoclPath := TempDirName + "/" + localPath
+    tempLoclPath := GetTempDirPath() + "/" + localPath
 
     var wg sync.WaitGroup
     chunkSize := fileSize / Threads
@@ -125,7 +135,7 @@ func DownloadFileConcurrently(downloadPath string, localPath string, fileName st
     defer out.Close()
 
     for i := 0; i < Threads ; i++ {
-        tempFilePath := TempDirName + "/" + fileName + "_" + strconv.Itoa(i)
+        tempFilePath := GetTempDirPath() + "/" + fileName + "_" + strconv.Itoa(i)
         content := ReadFile(tempFilePath)
         out.Write(content)
         CheckError(err)
@@ -199,4 +209,19 @@ func ListFiles(path string) []string {
         fileList = append(fileList, path + f.Name())
     }
     return fileList
+}
+
+func GetTempDirPath() string {
+    if tempDirPath == "" {
+        path, err := ioutil.TempDir("", "artifactory.cli.")
+        CheckError(err)
+        tempDirPath = path
+    }
+    return tempDirPath
+}
+
+func RemoveTempDir() {
+    if IsDirExists(tempDirPath) {
+        os.RemoveAll(tempDirPath)
+    }
 }

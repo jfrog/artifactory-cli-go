@@ -18,6 +18,8 @@ var flat bool
 var useRegExp bool
 
 func main() {
+    defer utils.RemoveTempDir()
+
     app := cli.NewApp()
     app.Name = "Artifactory CLI"
     app.Usage = "See https://github.com/JFrogDev/artifactory-cli-go for usage instructions."
