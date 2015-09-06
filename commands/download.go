@@ -31,14 +31,14 @@ func downloadFiles(resultItems []AqlSearchResultItem, url string, user string, p
         print("Downloading " + downloadPath + "...")
 
         if !dryRun {
-            artifactoryFileDetails := utils.GetFileDetailsFromArtifactory(downloadPath, user, password)
+            details := utils.GetFileDetailsFromArtifactory(downloadPath, user, password)
             localFilePath := resultItems[i].Path + "/" + resultItems[i].Name
-            if shouldDownloadFile(localFilePath, artifactoryFileDetails, user, password) {
-                if artifactoryFileDetails.Size < MinConcurrentDownloadSize {
+            if shouldDownloadFile(localFilePath, details, user, password) {
+                if !details.AcceptRanges || details.Size < MinConcurrentDownloadSize {
                     resp := utils.DownloadFile(downloadPath, resultItems[i].Path, resultItems[i].Name, flat, user, password)
                     println("Artifactory response:", resp.Status)
                 } else {
-                    utils.DownloadFileConcurrently(downloadPath, resultItems[i].Path, resultItems[i].Name, flat, user, password, artifactoryFileDetails.Size)
+                    utils.DownloadFileConcurrently(downloadPath, resultItems[i].Path, resultItems[i].Name, flat, user, password, details.Size)
                 }
             } else {
                 println("File already exists locally.")

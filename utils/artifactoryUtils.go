@@ -24,9 +24,11 @@ func GetFileDetailsFromArtifactory(downloadUrl string, user string, password str
     CheckError(err)
 
     fileDetails := new(FileDetails)
+
     fileDetails.Md5 = resp.Header.Get("X-Checksum-Md5")
     fileDetails.Sha1 = resp.Header.Get("X-Checksum-Sha1")
     fileDetails.Size = fileSize
+    fileDetails.AcceptRanges = resp.Header.Get("Accept-Ranges") == "bytes"
     return fileDetails
 }
 
@@ -34,4 +36,5 @@ type FileDetails struct {
     Md5 string
     Sha1 string
     Size int
+    AcceptRanges bool
 }
