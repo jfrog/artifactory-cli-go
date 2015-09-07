@@ -21,20 +21,21 @@ $ cd $GOPATH/src/github.com/JFrogDev/artifactory-cli-go
 
 Create the Artifactory CLI executable by running:
 ```console
-$ go install
+$ go build art.go
 ```
 
-The Artifactory CLI executable was created in $GOPATH/bin and is ready to be used.
+An executable file named *art* (the Artifactory CLI executable) was created in the current directory.
 
 ### Usage
 
-You can add the path of the CLI executable to your *PATH* environment variable, so that you can access it from any path.
+You can copy the *art* executable to a different location on your file-system and add it
+to your *PATH* environment variable, so that you can access it from any path.
 
 #### General command structure
-artifactory-cli-go should be followed by a command name (for example, upload), a list of options (for example, --url=http://...)
+*art* should be followed by a command name (for example, upload), a list of options (for example, --url=http://...)
 and the list of arguments for the command.
 ```console
-$ artifactory-cli-go command-name options arguments
+$ art command-name options arguments
 ```
 
 #### The Upload command
@@ -68,14 +69,14 @@ These symbols are replaced with the sections enclosed with parenthesis in the fi
 
 This example uploads the *froggy.tgz* file to the root of the *my-local-repo* repository
 ```console
-$ artifactory-cli-go upload froggy.tgz my-local-repo/ --url=http://domain/artifactory --user=admin --password=password
+$ art upload froggy.tgz my-local-repo/ --url=http://domain/artifactory --user=admin --password=password
 ```
 
 
 This example collects all the zip artifacts located under the build directory (including sub-directories)
    and uploads them to the *my-local-repo* repository, under the zipFiles folder, while keeping the artifacts original names.
    ```console
-$ artifactory-cli-go upload build/*.zip libs-release-local/zipFiles/ --url=http://domain/artifactory --user=admin --password=password
+$ art upload build/*.zip libs-release-local/zipFiles/ --url=http://domain/artifactory --user=admin --password=password
    ```
 
 #### The Download command
@@ -103,10 +104,10 @@ The artifacts are downloaded and saved to the current directory, while saving th
 
 This example downloads the *cool-froggy.zip* artifact located at the root of the *my-local-repo* repository to current directory.
 ```console
-$ artifactory-cli-go download my-local-repo/cool-froggy.zip --url=http://domain/artifactory --user=admin --password=password
+$ art download my-local-repo/cool-froggy.zip --url=http://domain/artifactory --user=admin --password=password
 ```
 
 This example downloads all artifacts located in the *my-local-repo* repository under the *all-my-frogs* folder to the *all-my-frog* directory located unde the current directory.
 ```console
-$ artifactory-cli-go download my-local-repo/all-my-frogs/ --url=http://domain/artifactory --user=admin --password=password
+$ art download my-local-repo/all-my-frogs/ --url=http://domain/artifactory --user=admin --password=password
 ```
