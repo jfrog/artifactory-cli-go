@@ -1,6 +1,7 @@
 package commands
 
 import (
+  "os"
   "strings"
   "regexp"
   "strconv"
@@ -9,7 +10,7 @@ import (
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-var MinChecksumDeploySize = 10240
+var MinChecksumDeploySize int64 = 10240
 
 func Upload(url string, localPath string, targetPath string, recursive bool, flat bool, props string, user string, password string, useRegExp bool, dryRun bool) {
     artifacts := getFilesToUpload(localPath, targetPath, recursive, flat, useRegExp)
@@ -145,16 +146,20 @@ func uploadFile(localPath string, targetPath string, props string, user string, 
         targetPath += ";" + props
     }
     print("Uploading artifact: " + targetPath + "...")
-    fileContent := utils.ReadFile(localPath)
+    file, err := os.Open(localPath)
+    utils.CheckError(err)
+    defer file.Close()
+    fileInfo, err := file.Stat()
+    utils.CheckError(err)
 
     var deployed bool = false
     var resp *http.Response
-    if len(fileContent) >= MinChecksumDeploySize {
-        resp = tryChecksumDeploy(fileContent, targetPath, user, password, dryRun)
+    if fileInfo.Size() >= 1 {
+        resp = tryChecksumDeploy(localPath, targetPath, user, password, dryRun)
         deployed = !dryRun && (resp.StatusCode == 201 || resp.StatusCode == 200)
     }
     if !deployed {
-        resp, _ = utils.SendPut(targetPath, fileContent, nil, user, password)
+        resp = utils.UploadFile(file, targetPath, user, password)
     }
     if !dryRun {
         println("Artifactory response: " + resp.Status)
@@ -163,19 +168,19 @@ func uploadFile(localPath string, targetPath string, props string, user string, 
     }
 }
 
-func tryChecksumDeploy(fileContent []byte, targetPath string, user string, password string, dryRun bool) *http.Response {
-    details := utils.GetFileDetails(fileContent)
+func tryChecksumDeploy(filePath string, targetPath, user, password string, dryRun bool) *http.Response {
+    details := utils.GetFileDetails(filePath)
 
     headers := make(map[string]string)
     headers["X-Checksum-Deploy"] = "true"
     headers["X-Checksum-Sha1"] = details.Sha1
     headers["X-Checksum-Md5"] = details.Md5
 
-    if !dryRun {
-        resp, _ := utils.SendPut(targetPath, nil, headers, user, password)
-        return resp
+    if dryRun {
+        return nil
     }
-    return nil
+    resp, _ := utils.SendPut(targetPath, nil, headers, user, password)
+    return resp
 }
 
 type Artifact struct {

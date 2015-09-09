@@ -1,11 +1,13 @@
 package utils
 
 import (
+    "io"
     "os"
 	"bytes"
 	"strings"
 	"strconv"
 	"sync"
+	"bufio"
 	"net/http"
 	"io/ioutil"
     "path/filepath"
@@ -63,14 +65,16 @@ func ReadFile(filePath string) []byte {
 	return content
 }
 
-// Sends an HTTP PUT request to the specified URL, sending the file in the
-// specified path.
-func PutFile(filePath string, url string, user string, password string, dryRun bool) {
-	content, err := ioutil.ReadFile(filePath)
-	CheckError(err)
-	if !dryRun {
-        SendPut(url, content, nil, user, password)
-	}
+func UploadFile(f *os.File, url, user, password string) *http.Response {
+    req, err := http.NewRequest("PUT", url, f)
+    CheckError(err)
+    if user != "" && password != "" {
+	    req.SetBasicAuth(user, password)
+    }
+    client := &http.Client{}
+    res, err := client.Do(req)
+    CheckError(err)
+    return res
 }
 
 func DownloadFile(downloadPath string, localPath string, fileName string, flat bool, user string, password string) *http.Response {
@@ -89,24 +93,24 @@ func DownloadFile(downloadPath string, localPath string, fileName string, flat b
     return nil
 }
 
-func DownloadFileConcurrently(downloadPath string, localPath string, fileName string, flat bool, user string, password string, fileSize int) {
+func DownloadFileConcurrently(downloadPath string, localPath string, fileName string, flat bool, user string, password string, fileSize int64) {
     Threads := 3
     tempLoclPath := GetTempDirPath() + "/" + localPath
 
     var wg sync.WaitGroup
-    chunkSize := fileSize / Threads
-    mod := fileSize % Threads
+    chunkSize := fileSize / int64(Threads)
+    mod := fileSize % int64(Threads)
 
     for i := 0; i < Threads ; i++ {
         wg.Add(1)
-        start := chunkSize * i
-        end := chunkSize * (i + 1)
+        start := chunkSize * int64(i)
+        end := chunkSize * (int64(i) + 1)
         if i == Threads-1 {
             end += mod
         }
-        go func(start int, end int, i int) {
+        go func(start, end int64, i int) {
             headers := make(map[string]string)
-            headers["Range"] = "bytes=" + strconv.Itoa(start) +"-" + strconv.Itoa(end-1)
+            headers["Range"] = "bytes=" + strconv.FormatInt(start, 10) +"-" + strconv.FormatInt(end-1, 10)
             resp, body := SendGet(downloadPath, headers, user, password)
 
             print("[" + strconv.Itoa(i) + "]:", resp.Status + "...")
@@ -130,15 +134,13 @@ func DownloadFileConcurrently(downloadPath string, localPath string, fileName st
         fileName = localPath + "/" + fileName
     }
 
-    out, err := os.Create(fileName)
-    CheckError(err)
-    defer out.Close()
-
+    if IsPathExists(fileName) {
+        err := os.Remove(fileName)
+        CheckError(err)
+    }
     for i := 0; i < Threads ; i++ {
         tempFilePath := GetTempDirPath() + "/" + fileName + "_" + strconv.Itoa(i)
-        content := ReadFile(tempFilePath)
-        out.Write(content)
-        CheckError(err)
+        AppendFile(tempFilePath, fileName)
     }
     println("Done downloading.")
 }
@@ -224,4 +226,46 @@ func RemoveTempDir() {
     if IsDirExists(tempDirPath) {
         os.RemoveAll(tempDirPath)
     }
+}
+
+// Reads the content of the file in the source path and appends it to
+// the file in the destination path.
+func AppendFile(srcPath, destPath string) {
+    srcFile, err := os.Open(srcPath)
+    CheckError(err)
+
+    defer func() {
+        err := srcFile.Close();
+        CheckError(err)
+    }()
+
+    reader := bufio.NewReader(srcFile)
+
+    var destFile *os.File
+    if IsPathExists(destPath) {
+        destFile, err = os.OpenFile(destPath, os.O_APPEND, 0666)
+    } else {
+        destFile, err = os.Create(destPath)
+    }
+    CheckError(err)
+    defer func() {
+        err := destFile.Close();
+        CheckError(err)
+    }()
+
+    writer := bufio.NewWriter(destFile)
+    buf := make([]byte, 1024)
+    for {
+        n, err := reader.Read(buf)
+        if err != io.EOF {
+            CheckError(err)
+        }
+        if n == 0 {
+            break
+        }
+        _, err = writer.Write(buf[:n])
+        CheckError(err)
+    }
+    err = writer.Flush()
+    CheckError(err)
 }

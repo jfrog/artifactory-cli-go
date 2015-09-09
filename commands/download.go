@@ -6,7 +6,7 @@ import (
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-var MinConcurrentDownloadSize = 1 // 10240000
+var MinConcurrentDownloadSize int64 = 1 // 10240000
 
 func Download(url string, downloadPattern string, recursive bool, props string, user string, password string, flat bool, dryRun bool) {
     aqlUrl := url + "api/search/aql"
@@ -58,7 +58,7 @@ func shouldDownloadFile(localFilePath string, artifactoryFileDetails *utils.File
     if !utils.IsFileExists(localFilePath) {
         return true
     }
-    localFileDetails := utils.GetFileDetails(utils.ReadFile(localFilePath))
+    localFileDetails := utils.GetFileDetails(localFilePath)
     if localFileDetails.Md5 != artifactoryFileDetails.Md5 || localFileDetails.Sha1 != artifactoryFileDetails.Sha1 {
        return true
     }
