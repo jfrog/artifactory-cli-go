@@ -3,6 +3,7 @@ package main
 import (
   "strings"
   "os"
+  "strconv"
   "github.com/codegangsta/cli"
   "github.com/JFrogDev/artifactory-cli-go/commands"
   "github.com/JFrogDev/artifactory-cli-go/utils"
@@ -16,6 +17,8 @@ var props string
 var recursive bool
 var flat bool
 var useRegExp bool
+var minSplitSize int64
+var splitCount int
 
 func main() {
     defer utils.RemoveTempDir()
@@ -96,7 +99,7 @@ func GetUploadFlags() []cli.Flag {
 
 func GetDownloadFlags() []cli.Flag {
     flags := []cli.Flag{
-        nil,nil,nil,nil,nil,nil,
+        nil,nil,nil,nil,nil,nil,nil,nil,
     }
     copy(flags[0:3], GetFlags())
     flags[3] = cli.StringFlag{
@@ -111,6 +114,16 @@ func GetDownloadFlags() []cli.Flag {
     flags[5] = cli.BoolFlag{
         Name:  "flat",
         Usage: "[Default: false] Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded files.",
+    }
+    flags[6] = cli.StringFlag{
+        Name:  "min-split",
+        Value:  "",
+        Usage: "[Default: 5120] Minimum file size in KB to split into ranges when downloading. Set to -1 for no splits.",
+    }
+    flags[7] = cli.StringFlag{
+        Name:  "split-count",
+        Value:  "",
+        Usage: "[Default: 3] Number of parts to split a file when downloading. Set to 0 for no splits.",
     }
     return flags
 }
@@ -127,6 +140,29 @@ func InitFlags(c *cli.Context) {
     dryRun = c.Bool("dry-run")
     flat = c.Bool("flat")
     useRegExp = c.Bool("regexp")
+    var err error
+    if c.String("min-split") == "" {
+        minSplitSize = 5120
+    } else {
+        minSplitSize, err = strconv.ParseInt(c.String("min-split"), 10, 64)
+        if err != nil {
+            utils.Exit("The '--min-split' option should have a numeric value. Try 'art download --help'.")
+        }
+    }
+    if c.String("split-count") == "" {
+        splitCount = 3
+    } else {
+        splitCount, err = strconv.Atoi(c.String("split-count"))
+        if err != nil {
+            utils.Exit("The '--split-count' option should have a numeric value. Try 'art download --help'.")
+        }
+        if splitCount > 15 {
+            utils.Exit("The '--split-count' option value is limitted to a maximum of 15.")
+        }
+        if splitCount < 0 {
+            utils.Exit("The '--split-count' option cannot have a negative value.")
+        }
+    }
 
     if c.String("recursive") == "" {
         recursive = true
@@ -141,7 +177,7 @@ func Download(c *cli.Context) {
         utils.Exit("Wrong number of arguments. Try 'art download --help'.")
     }
     pattern := c.Args()[0]
-    commands.Download(url, pattern, recursive, props, user, password, flat, dryRun)
+    commands.Download(url, pattern, props, user, password, recursive, flat, dryRun, minSplitSize, splitCount)
 }
 
 func Upload(c *cli.Context) {

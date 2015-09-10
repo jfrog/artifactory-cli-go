@@ -6,19 +6,47 @@ import (
   "regexp"
   "strconv"
   "runtime"
+  "sync"
   "net/http"
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-var MinChecksumDeploySize int64 = 10240
+func Upload(url, localPath, targetPath string, recursive bool, flat bool, props, user, password string, useRegExp, dryRun bool) {
+    Threads := 5
 
-func Upload(url string, localPath string, targetPath string, recursive bool, flat bool, props string, user string, password string, useRegExp bool, dryRun bool) {
+    // Get the list of artifacts to be uploaded to Artifactory:
     artifacts := getFilesToUpload(localPath, targetPath, recursive, flat, useRegExp)
 
-    for _, artifact := range artifacts {
-        target := url + artifact.TargetPath
-        uploadFile(artifact.LocalPath, target, props, user, password, dryRun)
+    // Create an array of channels for the artifacts upload:
+    channelsArray := []chan Artifact{}
+    for i := 0; i < Threads; i++ {
+        var artifactsChannel chan Artifact = make(chan Artifact, len(artifacts))
+        channelsArray = append(channelsArray, artifactsChannel)
     }
+
+    // Spread the artifacts equally between the created channels:
+    i := 0
+    for _, artifact := range artifacts {
+        i = (i+1) % Threads
+        channelsArray[i] <- artifact
+    }
+
+    // Start a thread for each channel and start uploading:
+    var wg sync.WaitGroup
+    for i := 0; i < Threads; i++ {
+        wg.Add(1)
+        go func(threadId int) {
+            channel := channelsArray[threadId]
+            for len(channel) > 0 {
+                artifact := <- channel
+                target := url + artifact.TargetPath
+                print("[thread " + strconv.Itoa(threadId) + "] ")
+                uploadFile(artifact.LocalPath, target, props, user, password, dryRun)
+            }
+            wg.Done()
+        }(i)
+    }
+    wg.Wait()
 }
 
 func prepareUploadPath(path string) string {

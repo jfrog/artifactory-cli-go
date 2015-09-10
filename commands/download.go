@@ -6,9 +6,7 @@ import (
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-var MinConcurrentDownloadSize int64 = 1 // 10240000
-
-func Download(url string, downloadPattern string, recursive bool, props string, user string, password string, flat bool, dryRun bool) {
+func Download(url, downloadPattern, props, user, password string, recursive, flat, dryRun bool, minSplitSize int64, splitCount int) {
     aqlUrl := url + "api/search/aql"
     if strings.HasSuffix(downloadPattern, "/") {
         downloadPattern += "*"
@@ -20,12 +18,13 @@ func Download(url string, downloadPattern string, recursive bool, props string, 
 
     json := utils.SendPost(aqlUrl, []byte(data), user, password)
     resultItems := parseAqlSearchResponse(json)
-    downloadFiles(resultItems, url, user, password, flat, dryRun)
+    downloadFiles(resultItems, url, user, password, flat, dryRun, minSplitSize, splitCount)
 }
 
-func downloadFiles(resultItems []AqlSearchResultItem, url string, user string, password string, flat bool, dryRun bool) {
-    size := len(resultItems)
+func downloadFiles(resultItems []AqlSearchResultItem, url, user, password string, flat bool, dryRun bool,
+    minSplitSize int64, splitCount int) {
 
+    size := len(resultItems)
     for i := 0; i < size; i++ {
         downloadPath := buildDownloadUrl(url, resultItems[i])
         print("Downloading " + downloadPath + "...")
@@ -34,11 +33,12 @@ func downloadFiles(resultItems []AqlSearchResultItem, url string, user string, p
             details := utils.GetFileDetailsFromArtifactory(downloadPath, user, password)
             localFilePath := resultItems[i].Path + "/" + resultItems[i].Name
             if shouldDownloadFile(localFilePath, details, user, password) {
-                if !details.AcceptRanges || details.Size < MinConcurrentDownloadSize {
+                if splitCount == 0 || minSplitSize < 0 || minSplitSize*1000 > details.Size || !details.AcceptRanges {
                     resp := utils.DownloadFile(downloadPath, resultItems[i].Path, resultItems[i].Name, flat, user, password)
                     println("Artifactory response:", resp.Status)
                 } else {
-                    utils.DownloadFileConcurrently(downloadPath, resultItems[i].Path, resultItems[i].Name, flat, user, password, details.Size)
+                    utils.DownloadFileConcurrently(
+                        downloadPath, resultItems[i].Path, resultItems[i].Name, flat, user, password, details.Size, splitCount)
                 }
             } else {
                 println("File already exists locally.")

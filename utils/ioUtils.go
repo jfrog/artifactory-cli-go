@@ -93,19 +93,20 @@ func DownloadFile(downloadPath string, localPath string, fileName string, flat b
     return nil
 }
 
-func DownloadFileConcurrently(downloadPath string, localPath string, fileName string, flat bool, user string, password string, fileSize int64) {
-    Threads := 3
+func DownloadFileConcurrently(downloadPath string, localPath string, fileName string,
+    flat bool, user string, password string, fileSize int64, splitCount int) {
+
     tempLoclPath := GetTempDirPath() + "/" + localPath
 
     var wg sync.WaitGroup
-    chunkSize := fileSize / int64(Threads)
-    mod := fileSize % int64(Threads)
+    chunkSize := fileSize / int64(splitCount)
+    mod := fileSize % int64(splitCount)
 
-    for i := 0; i < Threads ; i++ {
+    for i := 0; i < splitCount ; i++ {
         wg.Add(1)
         start := chunkSize * int64(i)
         end := chunkSize * (int64(i) + 1)
-        if i == Threads-1 {
+        if i == splitCount-1 {
             end += mod
         }
         go func(start, end int64, i int) {
@@ -138,7 +139,7 @@ func DownloadFileConcurrently(downloadPath string, localPath string, fileName st
         err := os.Remove(fileName)
         CheckError(err)
     }
-    for i := 0; i < Threads ; i++ {
+    for i := 0; i < splitCount; i++ {
         tempFilePath := GetTempDirPath() + "/" + fileName + "_" + strconv.Itoa(i)
         AppendFile(tempFilePath, fileName)
     }
