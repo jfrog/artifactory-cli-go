@@ -3,6 +3,7 @@ package main
 import (
   "strings"
   "os"
+  "os/user"
   "strconv"
   "github.com/codegangsta/cli"
   "github.com/JFrogDev/artifactory-cli-go/commands"
@@ -11,7 +12,7 @@ import (
 
 var dryRun bool
 var url string
-var user string
+var username string
 var password string
 var props string
 var recursive bool
@@ -19,6 +20,7 @@ var flat bool
 var useRegExp bool
 var minSplitSize int64
 var splitCount int
+var confFile string
 
 func main() {
     defer utils.RemoveTempDir()
@@ -28,6 +30,15 @@ func main() {
     app.Usage = "See https://github.com/JFrogDev/artifactory-cli-go for usage instructions."
 
     app.Commands = []cli.Command{
+        {
+            Name: "config",
+            Flags: GetFlags(),
+            Aliases: []string{"c"},
+            Usage: "config",
+            Action: func(c *cli.Context) {
+                Config(c)
+            },
+        },
         {
             Name: "upload",
             Flags: GetUploadFlags(),
@@ -55,11 +66,11 @@ func GetFlags() []cli.Flag {
     return []cli.Flag{
         cli.StringFlag{
          Name:  "url",
-         Usage: "[Mandatiry] Artifactory URL",
+         Usage: "[Mandatory] Artifactory URL",
         },
         cli.StringFlag{
          Name:  "user",
-         Usage: "[Optional] Artifactory user",
+         Usage: "[Optional] Artifactory username",
         },
         cli.StringFlag{
          Name:  "password",
@@ -134,7 +145,7 @@ func InitFlags(c *cli.Context) {
         url += "/"
     }
 
-    user = c.String("user")
+    username = c.String("user")
     password = c.String("password")
     props = c.String("props")
     dryRun = c.Bool("dry-run")
@@ -171,13 +182,33 @@ func InitFlags(c *cli.Context) {
     }
 }
 
+func Config(c *cli.Context) {
+    usr, err := user.Current()
+    utils.CheckError(err)
+    confFile = usr.HomeDir + "/.jfrog/cli.conf"
+    println("Looking for config file '" + confFile + "'")
+    if len(c.Args()) == 0 {
+        if !utils.IsPathExists(confFile) {
+            println("CLI conf file does not exists")
+        } else {
+            println("CLI conf file content:")
+            // TODO: Read the flags from the conf and display
+        }
+    } else {
+        key := c.Args()[0]
+        val := c.Args()[1]
+        println("Adding "+key+"="+val+" to the CLI conf file")
+        // TODO: Add or modify the entry in the conf file and create the file if needed
+    }
+}
+
 func Download(c *cli.Context) {
     InitFlags(c)
     if len(c.Args()) != 1 {
         utils.Exit("Wrong number of arguments. Try 'art download --help'.")
     }
     pattern := c.Args()[0]
-    commands.Download(url, pattern, props, user, password, recursive, flat, dryRun, minSplitSize, splitCount)
+    commands.Download(url, pattern, props, username, password, recursive, flat, dryRun, minSplitSize, splitCount)
 }
 
 func Upload(c *cli.Context) {
@@ -188,7 +219,7 @@ func Upload(c *cli.Context) {
     }
     localPath := c.Args()[0]
     targetPath := c.Args()[1]
-    commands.Upload(url, localPath, targetPath, recursive, flat, props, user, password, useRegExp, dryRun)
+    commands.Upload(url, localPath, targetPath, recursive, flat, props, username, password, useRegExp, dryRun)
 }
 
 // Get a CLI flagg. If the flag does not exist, utils.Exit with a message.
