@@ -18,6 +18,7 @@ var props string
 var recursive bool
 var flat bool
 var useRegExp bool
+var threads int
 var minSplitSize int64
 var splitCount int
 var confFile string
@@ -81,7 +82,7 @@ func GetFlags() []cli.Flag {
 
 func GetUploadFlags() []cli.Flag {
     flags := []cli.Flag{
-        nil,nil,nil,nil,nil,nil,nil,nil,
+        nil,nil,nil,nil,nil,nil,nil,nil,nil,
     }
     copy(flags[0:3], GetFlags())
     flags[3] = cli.StringFlag{
@@ -101,7 +102,12 @@ func GetUploadFlags() []cli.Flag {
          Name:  "regexp",
          Usage: "[Default: false] Set to true to use a regular expression instead of wildcards expression to collect files to upload.",
     }
-    flags[7] = cli.BoolFlag{
+    flags[7] = cli.StringFlag{
+         Name:  "threads",
+         Value:  "",
+         Usage: "[Default: 3] Number of artifacts to upload in parallel.",
+    }
+    flags[8] = cli.BoolFlag{
          Name:  "dry-run",
          Usage: "[Default: false] Set to true to disable communication with Artifactory.",
     }
@@ -110,7 +116,7 @@ func GetUploadFlags() []cli.Flag {
 
 func GetDownloadFlags() []cli.Flag {
     flags := []cli.Flag{
-        nil,nil,nil,nil,nil,nil,nil,nil,
+        nil,nil,nil,nil,nil,nil,nil,nil,nil,
     }
     copy(flags[0:3], GetFlags())
     flags[3] = cli.StringFlag{
@@ -136,6 +142,11 @@ func GetDownloadFlags() []cli.Flag {
         Value:  "",
         Usage: "[Default: 3] Number of parts to split a file when downloading. Set to 0 for no splits.",
     }
+    flags[8] = cli.StringFlag{
+         Name:  "threads",
+         Value:  "",
+         Usage: "[Default: 3] Number of artifacts to download in parallel.",
+    }
     return flags
 }
 
@@ -152,6 +163,14 @@ func InitFlags(c *cli.Context) {
     flat = c.Bool("flat")
     useRegExp = c.Bool("regexp")
     var err error
+    if c.String("threads") == "" {
+        threads = 3
+    } else {
+        threads, err = strconv.Atoi(c.String("threads"))
+        if err != nil || threads < 1 || threads > 30 {
+            utils.Exit("The '--threads' option should have a numeric value between 1 and 30. Try 'art download --help'.")
+        }
+    }
     if c.String("min-split") == "" {
         minSplitSize = 5120
     } else {
@@ -197,7 +216,7 @@ func Config(c *cli.Context) {
     } else {
         key := c.Args()[0]
         val := c.Args()[1]
-        println("Adding "+key+"="+val+" to the CLI conf file")
+        println("Adding " + key + "=" + val + " to the CLI conf file")
         // TODO: Add or modify the entry in the conf file and create the file if needed
     }
 }
@@ -208,7 +227,7 @@ func Download(c *cli.Context) {
         utils.Exit("Wrong number of arguments. Try 'art download --help'.")
     }
     pattern := c.Args()[0]
-    commands.Download(url, pattern, props, username, password, recursive, flat, dryRun, minSplitSize, splitCount)
+    commands.Download(url, pattern, props, username, password, recursive, flat, dryRun, minSplitSize, splitCount, threads)
 }
 
 func Upload(c *cli.Context) {
@@ -219,7 +238,7 @@ func Upload(c *cli.Context) {
     }
     localPath := c.Args()[0]
     targetPath := c.Args()[1]
-    commands.Upload(url, localPath, targetPath, recursive, flat, props, username, password, useRegExp, dryRun)
+    commands.Upload(url, localPath, targetPath, recursive, flat, props, username, password, threads, useRegExp, dryRun)
 }
 
 // Get a CLI flagg. If the flag does not exist, utils.Exit with a message.
