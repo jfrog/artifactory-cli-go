@@ -4,6 +4,7 @@ import (
     "os"
     "io"
     "strconv"
+    "sync"
     "crypto/md5"
     "crypto/sha1"
     "encoding/hex"
@@ -61,6 +62,59 @@ func GetFileDetailsFromArtifactory(downloadUrl string, user string, password str
     fileDetails.Size = fileSize
     fileDetails.AcceptRanges = resp.Header.Get("Accept-Ranges") == "bytes"
     return fileDetails
+}
+
+func DownloadFileConcurrently(downloadPath string, localPath string, fileName string,
+    flat bool, user string, password string, fileSize int64, splitCount int, logMsgPrefix string) {
+
+    tempLoclPath := GetTempDirPath() + "/" + localPath
+
+    var wg sync.WaitGroup
+    chunkSize := fileSize / int64(splitCount)
+    mod := fileSize % int64(splitCount)
+
+    for i := 0; i < splitCount ; i++ {
+        wg.Add(1)
+        start := chunkSize * int64(i)
+        end := chunkSize * (int64(i) + 1)
+        if i == splitCount-1 {
+            end += mod
+        }
+        go func(start, end int64, i int) {
+            headers := make(map[string]string)
+            headers["Range"] = "bytes=" + strconv.FormatInt(start, 10) +"-" + strconv.FormatInt(end-1, 10)
+            resp, body := SendGet(downloadPath, headers, user, password)
+
+            println(logMsgPrefix + " [" + strconv.Itoa(i) + "]:", resp.Status + "...")
+
+            os.MkdirAll(tempLoclPath ,0777)
+            filePath := tempLoclPath + "/" + fileName + "_" + strconv.Itoa(i)
+
+            out, err := os.Create(filePath)
+            CheckError(err)
+            defer out.Close()
+
+            out.Write(body)
+            CheckError(err)
+            wg.Done()
+        }(start, end, i)
+    }
+    wg.Wait()
+
+    if !flat && localPath != "" {
+        os.MkdirAll(localPath ,0777)
+        fileName = localPath + "/" + fileName
+    }
+
+    if IsPathExists(fileName) {
+        err := os.Remove(fileName)
+        CheckError(err)
+    }
+    for i := 0; i < splitCount; i++ {
+        tempFilePath := GetTempDirPath() + "/" + fileName + "_" + strconv.Itoa(i)
+        AppendFile(tempFilePath, fileName)
+    }
+    println(logMsgPrefix + " Done downloading.")
 }
 
 type FileDetails struct {

@@ -52,6 +52,7 @@ Used to upload artifacts to Artifactory.
    --flat         [Default: false] If not set to true, and the upload path ends with a slash, artifacts are uploaded according to their file system hierarchy.
    --recursive    [Default: true] Set to false if you do not wish to collect artifacts in sub-folders to be uploaded to Artifactory.
    --regexp       [Default: false] Set to true to use a regular expression instead of wildcards expression to collect artifacts to upload.
+   --threads      [Default: 3] Number of artifacts to upload in parallel.
    --dry-run      [Default: false] Set to true to disable communication with Artifactory.
 ```
 ##### Arguments
@@ -93,8 +94,9 @@ Used to download artifacts from Artifactory.
    --props        [Optional] List of properties in the form of key1=value1;key2=value2,... Only artifacts with these properties will be downloaded.
    --flat         [Default: false] Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded artifacts
    --recursive    [Default: true] Set to false if you do not wish to include the download of artifacts inside sub-directories in Artifactory.
-   --min-split    [Default: 5120] Minimum file size in KB to split into ranges. Set to -1 for no split.
+   --min-split    [Default: 5120] Minimum file size in KB to split into ranges. Set to -1 for no splits.
    --split-count  [Default: 3] Number of parts to split a file when downloading. Set to 0 for no splits.
+   --threads      [Default: 3] Number of artifacts to download in parallel.
 ```
 
 ##### Arguments

@@ -11,42 +11,25 @@ import (
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-func Upload(url, localPath, targetPath string, recursive bool, flat bool, props, user, password string, useRegExp, dryRun bool) {
-    Threads := 5
-
+func Upload(url, localPath, targetPath string, recursive bool, flat bool, props, user, password string, threads int, useRegExp, dryRun bool) {
     // Get the list of artifacts to be uploaded to Artifactory:
     artifacts := getFilesToUpload(localPath, targetPath, recursive, flat, useRegExp)
-
-    // Create an array of channels for the artifacts upload:
-    channelsArray := []chan Artifact{}
-    for i := 0; i < Threads; i++ {
-        var artifactsChannel chan Artifact = make(chan Artifact, len(artifacts))
-        channelsArray = append(channelsArray, artifactsChannel)
-    }
-
-    // Spread the artifacts equally between the created channels:
-    i := 0
-    for _, artifact := range artifacts {
-        i = (i+1) % Threads
-        channelsArray[i] <- artifact
-    }
+    size := len(artifacts)
 
     // Start a thread for each channel and start uploading:
     var wg sync.WaitGroup
-    for i := 0; i < Threads; i++ {
+    for i := 0; i < threads; i++ {
         wg.Add(1)
         go func(threadId int) {
-            channel := channelsArray[threadId]
-            for len(channel) > 0 {
-                artifact := <- channel
-                target := url + artifact.TargetPath
-                print("[thread " + strconv.Itoa(threadId) + "] ")
-                uploadFile(artifact.LocalPath, target, props, user, password, dryRun)
+            for j := threadId; j < size; j += threads {
+                target := url + artifacts[j].TargetPath
+                uploadFile(artifacts[j].LocalPath, target, props, user, password, dryRun, utils.GetLogMsgPrefix(threadId))
             }
             wg.Done()
         }(i)
     }
     wg.Wait()
+    println("Uploaded " + strconv.Itoa(size) + " artifacts to Artifactory.")
 }
 
 func prepareUploadPath(path string) string {
@@ -169,11 +152,12 @@ func getRootPath(path string, useRegExp bool) string {
     return rootPath
 }
 
-func uploadFile(localPath string, targetPath string, props string, user string, password string, dryRun bool) {
+func uploadFile(localPath string, targetPath string, props string, user string, password string,
+    dryRun bool, logMsgPrefix string) {
     if (props != "") {
         targetPath += ";" + props
     }
-    print("Uploading artifact: " + targetPath + "...")
+    println(logMsgPrefix + " Uploading artifact: " + targetPath + "...")
     file, err := os.Open(localPath)
     utils.CheckError(err)
     defer file.Close()
@@ -190,9 +174,7 @@ func uploadFile(localPath string, targetPath string, props string, user string, 
         resp = utils.UploadFile(file, targetPath, user, password)
     }
     if !dryRun {
-        println("Artifactory response: " + resp.Status)
-    } else {
-        println()
+        println(logMsgPrefix + "Artifactory response: " + resp.Status)
     }
 }
 

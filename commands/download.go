@@ -2,48 +2,65 @@ package commands
 
 import (
   "strings"
+  "sync"
+  "strconv"
   "encoding/json"
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-func Download(url, downloadPattern, props, user, password string, recursive, flat, dryRun bool, minSplitSize int64, splitCount int) {
+func Download(url, downloadPattern, props, user, password string, recursive, flat, dryRun bool,
+    minSplitSize int64, splitCount, threads int) {
     aqlUrl := url + "api/search/aql"
     if strings.HasSuffix(downloadPattern, "/") {
         downloadPattern += "*"
     }
-
     data := utils.BuildAqlSearchQuery(downloadPattern, recursive, props)
-
     println("AQL query: " + data)
-
     json := utils.SendPost(aqlUrl, []byte(data), user, password)
     resultItems := parseAqlSearchResponse(json)
-    downloadFiles(resultItems, url, user, password, flat, dryRun, minSplitSize, splitCount)
+    downloadFiles(resultItems, url, user, password, flat, dryRun, minSplitSize, splitCount, threads)
+
+    println("Downloaded " + strconv.Itoa(len(resultItems)) + " artifacts from Artifactory.")
 }
 
 func downloadFiles(resultItems []AqlSearchResultItem, url, user, password string, flat bool, dryRun bool,
-    minSplitSize int64, splitCount int) {
-
+    minSplitSize int64, splitCount, threads int) {
     size := len(resultItems)
-    for i := 0; i < size; i++ {
-        downloadPath := buildDownloadUrl(url, resultItems[i])
-        print("Downloading " + downloadPath + "...")
-
-        if !dryRun {
-            details := utils.GetFileDetailsFromArtifactory(downloadPath, user, password)
-            localFilePath := resultItems[i].Path + "/" + resultItems[i].Name
-            if shouldDownloadFile(localFilePath, details, user, password) {
-                if splitCount == 0 || minSplitSize < 0 || minSplitSize*1000 > details.Size || !details.AcceptRanges {
-                    resp := utils.DownloadFile(downloadPath, resultItems[i].Path, resultItems[i].Name, flat, user, password)
-                    println("Artifactory response:", resp.Status)
-                } else {
-                    utils.DownloadFileConcurrently(
-                        downloadPath, resultItems[i].Path, resultItems[i].Name, flat, user, password, details.Size, splitCount)
+    var wg sync.WaitGroup
+    for i := 0; i < threads; i++ {
+        wg.Add(1)
+        go func(threadId int) {
+            for j := threadId; j < size; j += threads {
+                downloadPath := buildDownloadUrl(url, resultItems[j])
+                logMsgPrefix := utils.GetLogMsgPrefix(threadId)
+                println(logMsgPrefix + " Downloading " + downloadPath + "...")
+                if !dryRun {
+                    downloadFile(downloadPath, resultItems[j].Path, resultItems[j].Name,
+                        user, password, flat, splitCount, minSplitSize, logMsgPrefix)
                 }
-            } else {
-                println("File already exists locally.")
             }
+            wg.Done()
+        }(i)
+    }
+    wg.Wait()
+}
+
+func downloadFile(downloadPath, localPath, localFileName, user, password string, flat bool,
+    splitCount int, minSplitSize int64, logMsgPrefix string) {
+
+    details := utils.GetFileDetailsFromArtifactory(downloadPath, user, password)
+    localFilePath := localPath + "/" + localFileName
+    if shouldDownloadFile(localFilePath, details, user, password) {
+        if splitCount == 0 || minSplitSize < 0 || minSplitSize*1000 > details.Size || !details.AcceptRanges {
+            resp := utils.DownloadFile(downloadPath, localPath, localFileName, flat, user, password)
+            println(logMsgPrefix + " Artifactory response:", resp.Status)
+        } else {
+            utils.DownloadFileConcurrently(
+                downloadPath, localPath, localFileName, flat, user, password,
+                    details.Size, splitCount, logMsgPrefix)
         }
+    } else {
+        println(logMsgPrefix + " File already exists locally.")
     }
 }
 
