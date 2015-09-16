@@ -1,7 +1,6 @@
 package commands
 
 import (
-  "strings"
   "sync"
   "strconv"
   "encoding/json"
@@ -11,9 +10,6 @@ import (
 func Download(url, downloadPattern, props, user, password string, recursive, flat, dryRun bool,
     minSplitSize int64, splitCount, threads int) {
     aqlUrl := url + "api/search/aql"
-    if strings.HasSuffix(downloadPattern, "/") {
-        downloadPattern += "*"
-    }
     data := utils.BuildAqlSearchQuery(downloadPattern, recursive, props)
     println("AQL query: " + data)
     json := utils.SendPost(aqlUrl, []byte(data), user, password)
@@ -33,7 +29,7 @@ func downloadFiles(resultItems []AqlSearchResultItem, url, user, password string
             for j := threadId; j < size; j += threads {
                 downloadPath := buildDownloadUrl(url, resultItems[j])
                 logMsgPrefix := utils.GetLogMsgPrefix(threadId)
-                println(logMsgPrefix + " Downloading " + downloadPath + "...")
+                println(logMsgPrefix + " Downloading " + downloadPath)
                 if !dryRun {
                     downloadFile(downloadPath, resultItems[j].Path, resultItems[j].Name,
                         user, password, flat, splitCount, minSplitSize, logMsgPrefix)

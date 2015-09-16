@@ -200,7 +200,7 @@ func AppendFile(srcPath, destPath string) {
     }()
 
     writer := bufio.NewWriter(destFile)
-    buf := make([]byte, 1024)
+    buf := make([]byte, 1024000)
     for {
         n, err := reader.Read(buf)
         if err != io.EOF {

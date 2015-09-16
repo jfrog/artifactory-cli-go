@@ -61,10 +61,15 @@ func localPathToRegExp(localpath string) string {
     }
     localpath = strings.Replace(localpath, ".", "\\.", -1)
     localpath = strings.Replace(localpath, "*", wildcard, -1)
+    localpath = "^" + localpath + "$"
     return localpath
 }
 
 func getFilesToUpload(localpath string, targetPath string, recursive bool, flat bool, useRegExp bool) []Artifact {
+    if strings.Index(targetPath, "/") < 0 {
+        targetPath += "/"
+    }
+
     rootPath := getRootPath(localpath, useRegExp)
     if !utils.IsPathExists(rootPath) {
         utils.Exit("Path does not exist: " + rootPath)
@@ -157,7 +162,7 @@ func uploadFile(localPath string, targetPath string, props string, user string, 
     if (props != "") {
         targetPath += ";" + props
     }
-    println(logMsgPrefix + " Uploading artifact: " + targetPath + "...")
+    println(logMsgPrefix + " Uploading artifact: " + targetPath)
     file, err := os.Open(localPath)
     utils.CheckError(err)
     defer file.Close()
@@ -174,7 +179,7 @@ func uploadFile(localPath string, targetPath string, props string, user string, 
         resp = utils.UploadFile(file, targetPath, user, password)
     }
     if !dryRun {
-        println(logMsgPrefix + "Artifactory response: " + resp.Status)
+        println(logMsgPrefix + " Artifactory response: " + resp.Status)
     }
 }
 

@@ -1,6 +1,7 @@
 ## Artifactory CLI
 
 Artifactory CLI provides a command line interface for uploading and downloading artifacts to and from Artifactory.
+It supports Artifactory version 3.5.3 and above.
 
 ### Build the command line executable
 
@@ -56,7 +57,7 @@ Used to upload artifacts to Artifactory.
    --dry-run      [Default: false] Set to true to disable communication with Artifactory.
 ```
 ##### Arguments
-* The first argument is the path to the artifacts to be uploaded to Artifactory.
+* The first argument is the local file-system path to the artifacts to be uploaded to Artifactory.
 The path can include a single file or multiple artifacts, by using the * wildcard.
 **Important:** If the path is provided as a regular expression (with the --regexp=true option) then
 the first regular expression appearing as part of the argument must be enclosed in parenthesis.
@@ -101,7 +102,7 @@ Used to download artifacts from Artifactory.
 
 ##### Arguments
 The command expects one argument - the path of artifacts to be downloaded from Artifactory.
-The argument should have the following format: [repository name]:[repository path]
+The argument should have the following format: [repository name]/[repository path]
 The path can include a single artifact or multiple artifacts, by using the * wildcard.
 The artifacts are downloaded and saved to the current directory, while saving their folder structure.
 

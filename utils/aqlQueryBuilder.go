@@ -5,10 +5,8 @@ import (
 )
 
 func BuildAqlSearchQuery(searchPattern string, recursive bool, props string) string {
+    searchPattern = prepareSearchPattern(searchPattern)
     index := strings.Index(searchPattern, "/")
-    if index == -1 {
-        Exit("Invalid search pattern: " + searchPattern)
-    }
 
     repo := searchPattern[:index]
     searchPattern = searchPattern[index+1:]
@@ -45,6 +43,17 @@ func BuildAqlSearchQuery(searchPattern string, recursive bool, props string) str
         "}"
 
     return "items.find(" + json + ")"
+}
+
+func prepareSearchPattern(pattern string) string {
+    index := strings.Index(pattern, "/")
+    if index < 0 {
+        pattern += "/"
+    }
+    if strings.HasSuffix(pattern, "/") {
+        pattern += "*"
+    }
+    return pattern
 }
 
 func buildPropsQuery(props string) string {

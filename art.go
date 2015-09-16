@@ -27,7 +27,7 @@ func main() {
     defer utils.RemoveTempDir()
 
     app := cli.NewApp()
-    app.Name = "Artifactory CLI"
+    app.Name = "art"
     app.Usage = "See https://github.com/JFrogDev/artifactory-cli-go for usage instructions."
 
     app.Commands = []cli.Command{
@@ -94,9 +94,10 @@ func GetUploadFlags() []cli.Flag {
         Value:  "",
         Usage: "[Default: true] Set to false if you do not wish to collect artifacts in sub-folders to be uploaded to Artifactory.",
     }
-    flags[5] = cli.BoolFlag{
+    flags[5] = cli.StringFlag{
         Name:  "flat",
-        Usage: "[Default: false] If not set to true, and the upload path ends with a slash, files are uploaded according to their file system hierarchy.",
+        Value:  "",
+        Usage: "[Default: true] If not set to true, and the upload path ends with a slash, files are uploaded according to their file system hierarchy.",
     }
     flags[6] = cli.BoolFlag{
          Name:  "regexp",
@@ -128,8 +129,9 @@ func GetDownloadFlags() []cli.Flag {
         Value:  "",
         Usage: "[Default: true] Set to false if you do not wish to include the download of artifacts inside sub-folders in Artifactory.",
     }
-    flags[5] = cli.BoolFlag{
+    flags[5] = cli.StringFlag{
         Name:  "flat",
+        Value:  "",
         Usage: "[Default: false] Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded files.",
     }
     flags[6] = cli.StringFlag{
@@ -150,17 +152,28 @@ func GetDownloadFlags() []cli.Flag {
     return flags
 }
 
-func InitFlags(c *cli.Context) {
+func InitFlags(c *cli.Context, cmd string) {
     url = GetMandatoryFlag(c, "url")
     if !strings.HasSuffix(url, "/") {
         url += "/"
+    }
+
+    strFlat := c.String("flat")
+    if cmd == "upload" {
+        if strFlat == "" {
+            flat = true
+        }
+    } else
+    if cmd == "download" {
+        if strFlat == "" {
+            flat = false
+        }
     }
 
     username = c.String("user")
     password = c.String("password")
     props = c.String("props")
     dryRun = c.Bool("dry-run")
-    flat = c.Bool("flat")
     useRegExp = c.Bool("regexp")
     var err error
     if c.String("threads") == "" {
@@ -222,7 +235,7 @@ func Config(c *cli.Context) {
 }
 
 func Download(c *cli.Context) {
-    InitFlags(c)
+    InitFlags(c, "download")
     if len(c.Args()) != 1 {
         utils.Exit("Wrong number of arguments. Try 'art download --help'.")
     }
@@ -231,7 +244,7 @@ func Download(c *cli.Context) {
 }
 
 func Upload(c *cli.Context) {
-    InitFlags(c)
+    InitFlags(c, "upload")
     size := len(c.Args())
     if size != 2 {
         utils.Exit("Wrong number of arguments. Try 'art upload --help'.")
