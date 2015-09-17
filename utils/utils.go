@@ -16,6 +16,12 @@ func Exit(msg string) {
     os.Exit(1)
 }
 
-func GetLogMsgPrefix(threadId int) string {
-    return "[thread " + strconv.Itoa(threadId) + "]"
+func GetLogMsgPrefix(threadId int, dryRun bool) string {
+    var strDryRun string
+    if dryRun {
+        strDryRun = " [Dry run]"
+    } else {
+        strDryRun = ""
+    }
+    return "[Thread " + strconv.Itoa(threadId) + "]" + strDryRun
 }

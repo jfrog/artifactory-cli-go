@@ -1,43 +1,52 @@
 package commands
 
 import (
+    "os"
     "bytes"
+    "os/user"
+    "io/ioutil"
     "encoding/json"
-    //"os/user"
     "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-func Config() {
-    props := make(map[string]string)
-    props["key1"] = "val1"
-    props["key2"] = "val2"
+func Config(props map[string]string) {
+    oldProps := readConfFile()
+    println(len(oldProps))
+    writeConfFile(props)
+}
 
-    user := &props
-    b, err := json.Marshal(user)
+func getConFilePath() string {
+    userDir, err := user.Current()
     utils.CheckError(err)
+    confPath := userDir.HomeDir + "/.jfrog/"
+    os.MkdirAll(confPath ,0777)
+    return confPath + "art-cli.conf"
+}
 
-    var out bytes.Buffer
-    err = json.Indent(&out, b, "", "  ")
-    utils.CheckError(err)
-    println(string(out.Bytes()))
-
-    /*
-    usr, err := user.Current()
-    utils.CheckError(err)
-    confFile = usr.HomeDir + "/.jfrog/cli.conf"
-    println("Looking for config file '" + confFile + "'")
-    if len(c.Args()) == 0 {
-        if !utils.IsPathExists(confFile) {
-            println("CLI conf file does not exists")
-        } else {
-            println("CLI conf file content:")
-            // TODO: Read the flags from the conf and display
-        }
-    } else {
-        key := c.Args()[0]
-        val := c.Args()[1]
-        println("Adding " + key + "=" + val + " to the CLI conf file")
-        // TODO: Add or modify the entry in the conf file and create the file if needed
+func writeConfFile(props map[string]string) {
+    confFilePath := getConFilePath()
+    if !utils.IsFileExists(confFilePath) {
+        out, err := os.Create(confFilePath)
+        utils.CheckError(err)
+        defer out.Close()
     }
-    */
+
+    b, err := json.Marshal(&props)
+    utils.CheckError(err)
+    var content bytes.Buffer
+    err = json.Indent(&content, b, "", "  ")
+    utils.CheckError(err)
+
+    ioutil.WriteFile(confFilePath,[]byte(content.String()), 0x777)
+}
+
+func readConfFile() map[string]string {
+    confFilePath := getConFilePath()
+    if !utils.IsFileExists(confFilePath) {
+        return make(map[string]string)
+    }
+    content := utils.ReadFile(confFilePath)
+    props := make(map[string]string)
+    json.Unmarshal(content, &props)
+    return props
 }

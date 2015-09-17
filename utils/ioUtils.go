@@ -105,9 +105,8 @@ func SendPut(url string, content []byte, headers map[string]string, user string,
     return Send("PUT", url, content, headers, user, password)
 }
 
-func SendPost(url string, content []byte, user string, password string) []byte {
-    _, body := Send("POST", url, content, nil, user, password)
-    return body
+func SendPost(url string, content []byte, user string, password string) (*http.Response, []byte) {
+    return Send("POST", url, content, nil, user, password)
 }
 
 func SendGet(url string, headers map[string]string, user string, password string) (*http.Response, []byte) {

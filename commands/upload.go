@@ -22,7 +22,7 @@ func Upload(url, localPath, targetPath string, recursive bool, flat bool, props,
         go func(threadId int) {
             for j := threadId; j < size; j += threads {
                 target := url + artifacts[j].TargetPath
-                uploadFile(artifacts[j].LocalPath, target, props, user, password, dryRun, utils.GetLogMsgPrefix(threadId))
+                uploadFile(artifacts[j].LocalPath, target, props, user, password, dryRun, utils.GetLogMsgPrefix(threadId, dryRun))
             }
             wg.Done()
         }(i)
@@ -166,18 +166,24 @@ func uploadFile(localPath string, targetPath string, props string, user string, 
     fileInfo, err := file.Stat()
     utils.CheckError(err)
 
-    var deployed bool = false
+    var checksumDeployed bool = false
     var resp *http.Response
     var details *utils.FileDetails
     if fileInfo.Size() >= 10240 {
         resp, details = tryChecksumDeploy(localPath, targetPath, user, password, dryRun)
-        deployed = !dryRun && (resp.StatusCode == 201 || resp.StatusCode == 200)
+        checksumDeployed = !dryRun && (resp.StatusCode == 201 || resp.StatusCode == 200)
     }
-    if !dryRun && !deployed {
+    if !dryRun && !checksumDeployed {
         resp = utils.UploadFile(file, targetPath, user, password, details)
     }
     if !dryRun {
-        println(logMsgPrefix + " Artifactory response: " + resp.Status)
+        var strChecksumDeployed string
+        if checksumDeployed {
+            strChecksumDeployed = " (Checksum deploy)"
+        } else {
+            strChecksumDeployed = ""
+        }
+        println(logMsgPrefix + " Artifactory response: " + resp.Status + strChecksumDeployed)
     }
 }
 

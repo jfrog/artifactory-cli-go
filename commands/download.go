@@ -11,12 +11,16 @@ func Download(url, downloadPattern, props, user, password string, recursive, fla
     minSplitSize int64, splitCount, threads int) {
     aqlUrl := url + "api/search/aql"
     data := utils.BuildAqlSearchQuery(downloadPattern, recursive, props)
-    println("AQL query: " + data)
-    json := utils.SendPost(aqlUrl, []byte(data), user, password)
-    resultItems := parseAqlSearchResponse(json)
-    downloadFiles(resultItems, url, user, password, flat, dryRun, minSplitSize, splitCount, threads)
 
-    println("Downloaded " + strconv.Itoa(len(resultItems)) + " artifacts from Artifactory.")
+    println("Searching Artifactory using AQL query: " + data)
+    resp, json := utils.SendPost(aqlUrl, []byte(data), user, password)
+    println("Artifactory response:", resp.Status)
+
+    if resp.StatusCode == 200 {
+        resultItems := parseAqlSearchResponse(json)
+        downloadFiles(resultItems, url, user, password, flat, dryRun, minSplitSize, splitCount, threads)
+        println("Downloaded " + strconv.Itoa(len(resultItems)) + " artifacts from Artifactory.")
+    }
 }
 
 func downloadFiles(resultItems []AqlSearchResultItem, url, user, password string, flat bool, dryRun bool,
@@ -28,7 +32,7 @@ func downloadFiles(resultItems []AqlSearchResultItem, url, user, password string
         go func(threadId int) {
             for j := threadId; j < size; j += threads {
                 downloadPath := buildDownloadUrl(url, resultItems[j])
-                logMsgPrefix := utils.GetLogMsgPrefix(threadId)
+                logMsgPrefix := utils.GetLogMsgPrefix(threadId, dryRun)
                 println(logMsgPrefix + " Downloading " + downloadPath)
                 if !dryRun {
                     downloadFile(downloadPath, resultItems[j].Path, resultItems[j].Name,
@@ -81,7 +85,6 @@ func shouldDownloadFile(localFilePath string, artifactoryFileDetails *utils.File
 func parseAqlSearchResponse(resp []byte) []AqlSearchResultItem {
     var result AqlSearchResult
     err := json.Unmarshal(resp, &result)
-
     utils.CheckError(err)
     return result.Results
 }

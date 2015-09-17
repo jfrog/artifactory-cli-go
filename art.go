@@ -214,7 +214,12 @@ func initFlags(c *cli.Context, cmd string) {
 }
 
 func config(c *cli.Context) {
-    commands.Config()
+    props := make(map[string]string)
+    props["aa"] = "11"
+    props["bb"] = "22"
+    props["cc"] = "33"
+    props["dd"] = "44"
+    commands.Config(props)
 }
 
 func download(c *cli.Context) {
