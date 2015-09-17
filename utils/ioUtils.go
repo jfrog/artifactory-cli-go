@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"strings"
 	"bufio"
+	"strconv"
 	"net/http"
 	"io/ioutil"
     "path/filepath"
@@ -63,12 +64,21 @@ func ReadFile(filePath string) []byte {
 	return content
 }
 
-func UploadFile(f *os.File, url, user, password string) *http.Response {
+func UploadFile(f *os.File, url, user, password string, details *FileDetails) *http.Response {
+    if details == nil {
+        details = GetFileDetails(f.Name())
+    }
     req, err := http.NewRequest("PUT", url, f)
     CheckError(err)
     if user != "" && password != "" {
 	    req.SetBasicAuth(user, password)
     }
+
+    size := strconv.FormatInt(details.Size, 10)
+    req.Header.Set("Content-Length", size)
+    req.Header.Set("X-Checksum-Sha1", details.Sha1)
+    req.Header.Set("X-Checksum-Md5", details.Md5)
+
     client := &http.Client{}
     res, err := client.Do(req)
     CheckError(err)

@@ -17,15 +17,10 @@ $ go get github.com/JFrogDev/artifactory-cli-go
 
 CD into the following directory
 ```console
-$ cd $GOPATH/src/github.com/JFrogDev/artifactory-cli-go
+$ cd $GOPATH/bin
 ```
 
-Create the Artifactory CLI executable by running:
-```console
-$ go build art.go
-```
-
-An executable file named *art* (the Artifactory CLI executable) was created in the current directory.
+Rename the executable file located in the current directory to *art* (or *art.exe* on Windows):
 
 ### Usage
 
@@ -44,7 +39,7 @@ $ art command-name options arguments
 ##### Function
 Used to upload artifacts to Artifactory.
 
-##### Options
+##### Command options
 ```console
    --url          [Mandatory] Artifactory URL.
    --user         [Optional] Artifactory user.
@@ -87,7 +82,7 @@ $ art upload build/*.zip libs-release-local/zipFiles/ --url=http://domain/artifa
 Used to download artifacts from Artifactory.
 
 
-##### Options
+##### Command options
 ```console
    --url          [Mandatory] Artifactory URL
    --user         [Optional] Artifactory user

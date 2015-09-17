@@ -171,31 +171,33 @@ func uploadFile(localPath string, targetPath string, props string, user string, 
 
     var deployed bool = false
     var resp *http.Response
-    if fileInfo.Size() >= 1 {
-        resp = tryChecksumDeploy(localPath, targetPath, user, password, dryRun)
+    var details *utils.FileDetails
+    if fileInfo.Size() >= 10240 {
+        resp, details = tryChecksumDeploy(localPath, targetPath, user, password, dryRun)
         deployed = !dryRun && (resp.StatusCode == 201 || resp.StatusCode == 200)
     }
     if !deployed {
-        resp = utils.UploadFile(file, targetPath, user, password)
+        resp = utils.UploadFile(file, targetPath, user, password, details)
     }
     if !dryRun {
         println(logMsgPrefix + " Artifactory response: " + resp.Status)
     }
 }
 
-func tryChecksumDeploy(filePath string, targetPath, user, password string, dryRun bool) *http.Response {
-    details := utils.GetFileDetails(filePath)
+func tryChecksumDeploy(filePath string, targetPath, user, password string,
+    dryRun bool) (*http.Response, *utils.FileDetails) {
 
+    details := utils.GetFileDetails(filePath)
     headers := make(map[string]string)
     headers["X-Checksum-Deploy"] = "true"
     headers["X-Checksum-Sha1"] = details.Sha1
     headers["X-Checksum-Md5"] = details.Md5
 
     if dryRun {
-        return nil
+        return nil, details
     }
     resp, _ := utils.SendPut(targetPath, nil, headers, user, password)
-    return resp
+    return resp, details
 }
 
 type Artifact struct {
