@@ -5,7 +5,6 @@ import (
   "strings"
   "regexp"
   "strconv"
-  "runtime"
   "sync"
   "net/http"
   "github.com/JFrogDev/artifactory-cli-go/utils"
@@ -53,14 +52,12 @@ func prepareLocalPath(localpath string, useRegExp bool) string {
 }
 
 func localPathToRegExp(localpath string) string {
-    var wildcard string
-    if runtime.GOOS == "windows" {
-        wildcard = ".*"
-    } else {
-        wildcard = ".\\*"
-    }
+    wildcard := ".*"
     localpath = strings.Replace(localpath, ".", "\\.", -1)
     localpath = strings.Replace(localpath, "*", wildcard, -1)
+    if strings.HasSuffix(localpath, "/") || strings.HasSuffix(localpath, "\\") {
+        localpath += wildcard
+    }
     localpath = "^" + localpath + "$"
     return localpath
 }
@@ -176,7 +173,7 @@ func uploadFile(localPath string, targetPath string, props string, user string, 
         resp, details = tryChecksumDeploy(localPath, targetPath, user, password, dryRun)
         deployed = !dryRun && (resp.StatusCode == 201 || resp.StatusCode == 200)
     }
-    if !deployed {
+    if !dryRun && !deployed {
         resp = utils.UploadFile(file, targetPath, user, password, details)
     }
     if !dryRun {

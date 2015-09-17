@@ -3,7 +3,6 @@ package main
 import (
   "strings"
   "os"
-  "os/user"
   "strconv"
   "github.com/codegangsta/cli"
   "github.com/JFrogDev/artifactory-cli-go/commands"
@@ -33,29 +32,29 @@ func main() {
     app.Commands = []cli.Command{
         {
             Name: "config",
-            Flags: GetFlags(),
+            Flags: getFlags(),
             Aliases: []string{"c"},
             Usage: "config",
             Action: func(c *cli.Context) {
-                Config(c)
+                config(c)
             },
         },
         {
             Name: "upload",
-            Flags: GetUploadFlags(),
+            Flags: getUploadFlags(),
             Aliases: []string{"u"},
             Usage: "upload <local path> <repo path>",
             Action: func(c *cli.Context) {
-                Upload(c)
+                upload(c)
             },
         },
         {
             Name: "download",
-            Flags: GetDownloadFlags(),
+            Flags: getDownloadFlags(),
             Aliases: []string{"d"},
             Usage: "download <repo path>",
             Action: func(c *cli.Context) {
-                Download(c)
+                download(c)
             },
         },
     }
@@ -63,7 +62,7 @@ func main() {
     app.Run(os.Args)
 }
 
-func GetFlags() []cli.Flag {
+func getFlags() []cli.Flag {
     return []cli.Flag{
         cli.StringFlag{
          Name:  "url",
@@ -80,11 +79,11 @@ func GetFlags() []cli.Flag {
     }
 }
 
-func GetUploadFlags() []cli.Flag {
+func getUploadFlags() []cli.Flag {
     flags := []cli.Flag{
         nil,nil,nil,nil,nil,nil,nil,nil,nil,
     }
-    copy(flags[0:3], GetFlags())
+    copy(flags[0:3], getFlags())
     flags[3] = cli.StringFlag{
          Name:  "props",
          Usage: "[Optional] List of properties in the form of key1=value1;key2=value2,... to be attached to the uploaded artifacts.",
@@ -115,11 +114,11 @@ func GetUploadFlags() []cli.Flag {
     return flags
 }
 
-func GetDownloadFlags() []cli.Flag {
+func getDownloadFlags() []cli.Flag {
     flags := []cli.Flag{
         nil,nil,nil,nil,nil,nil,nil,nil,nil,
     }
-    copy(flags[0:3], GetFlags())
+    copy(flags[0:3], getFlags())
     flags[3] = cli.StringFlag{
          Name:  "props",
          Usage: "[Optional] List of properties in the form of key1=value1;key2=value2,... Only artifacts with these properties will be downloaded.",
@@ -152,8 +151,8 @@ func GetDownloadFlags() []cli.Flag {
     return flags
 }
 
-func InitFlags(c *cli.Context, cmd string) {
-    url = GetMandatoryFlag(c, "url")
+func initFlags(c *cli.Context, cmd string) {
+    url = getMandatoryFlag(c, "url")
     if !strings.HasSuffix(url, "/") {
         url += "/"
     }
@@ -214,28 +213,12 @@ func InitFlags(c *cli.Context, cmd string) {
     }
 }
 
-func Config(c *cli.Context) {
-    usr, err := user.Current()
-    utils.CheckError(err)
-    confFile = usr.HomeDir + "/.jfrog/cli.conf"
-    println("Looking for config file '" + confFile + "'")
-    if len(c.Args()) == 0 {
-        if !utils.IsPathExists(confFile) {
-            println("CLI conf file does not exists")
-        } else {
-            println("CLI conf file content:")
-            // TODO: Read the flags from the conf and display
-        }
-    } else {
-        key := c.Args()[0]
-        val := c.Args()[1]
-        println("Adding " + key + "=" + val + " to the CLI conf file")
-        // TODO: Add or modify the entry in the conf file and create the file if needed
-    }
+func config(c *cli.Context) {
+    commands.Config()
 }
 
-func Download(c *cli.Context) {
-    InitFlags(c, "download")
+func download(c *cli.Context) {
+    initFlags(c, "download")
     if len(c.Args()) != 1 {
         utils.Exit("Wrong number of arguments. Try 'art download --help'.")
     }
@@ -243,8 +226,8 @@ func Download(c *cli.Context) {
     commands.Download(url, pattern, props, username, password, recursive, flat, dryRun, minSplitSize, splitCount, threads)
 }
 
-func Upload(c *cli.Context) {
-    InitFlags(c, "upload")
+func upload(c *cli.Context) {
+    initFlags(c, "upload")
     size := len(c.Args())
     if size != 2 {
         utils.Exit("Wrong number of arguments. Try 'art upload --help'.")
@@ -255,7 +238,7 @@ func Upload(c *cli.Context) {
 }
 
 // Get a CLI flagg. If the flag does not exist, utils.Exit with a message.
-func GetMandatoryFlag(c *cli.Context, flag string) string {
+func getMandatoryFlag(c *cli.Context, flag string) string {
     value := c.String(flag)
     if value == "" {
         utils.Exit("The --" + flag + " flag is mandatory")
