@@ -39,6 +39,9 @@ func prepareUploadPath(path string) string {
 }
 
 func prepareLocalPath(localpath string, useRegExp bool) string {
+    if localpath == "./" || localpath == ".\\" {
+        return "^.*$"
+    }
     if strings.HasPrefix(localpath, "./") {
         localpath = localpath[2:]
     } else
@@ -79,6 +82,7 @@ func getFilesToUpload(localpath string, targetPath string, recursive bool, flat 
         utils.Exit("Path does not exist: " + rootPath)
     }
     localpath = prepareLocalPath(localpath, useRegExp)
+
     artifacts := []Artifact{}
     // If the path is a single file then return it
     if !utils.IsDir(rootPath) {

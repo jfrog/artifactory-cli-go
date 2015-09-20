@@ -161,12 +161,16 @@ func initFlags(c *cli.Context, cmd string) {
     if cmd == "upload" {
         if strFlat == "" {
             flat = true
+        } else {
+            flat, _ = strconv.ParseBool(strFlat)
         }
     } else
     if cmd == "download" {
         if strFlat == "" {
             flat = false
-        }
+        } else {
+             flat, _ = strconv.ParseBool(strFlat)
+         }
     }
 
     username = c.String("user")
