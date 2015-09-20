@@ -185,7 +185,7 @@ func RemoveTempDir() {
 
 // Reads the content of the file in the source path and appends it to
 // the file in the destination path.
-func AppendFile(srcPath, destPath string) {
+func AppendFile(srcPath string, destFile *os.File) {
     srcFile, err := os.Open(srcPath)
     CheckError(err)
 
@@ -195,18 +195,6 @@ func AppendFile(srcPath, destPath string) {
     }()
 
     reader := bufio.NewReader(srcFile)
-
-    var destFile *os.File
-    if IsPathExists(destPath) {
-        destFile, err = os.OpenFile(destPath, os.O_APPEND, 0666)
-    } else {
-        destFile, err = os.Create(destPath)
-    }
-    CheckError(err)
-    defer func() {
-        err := destFile.Close();
-        CheckError(err)
-    }()
 
     writer := bufio.NewWriter(destFile)
     buf := make([]byte, 1024000)

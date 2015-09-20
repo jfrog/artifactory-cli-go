@@ -110,9 +110,13 @@ func DownloadFileConcurrently(downloadPath string, localPath string, fileName st
         err := os.Remove(fileName)
         CheckError(err)
     }
+
+    destFile, err := os.Create(fileName)
+    CheckError(err)
+    defer destFile.Close()
     for i := 0; i < splitCount; i++ {
         tempFilePath := GetTempDirPath() + "/" + fileName + "_" + strconv.Itoa(i)
-        AppendFile(tempFilePath, fileName)
+        AppendFile(tempFilePath, destFile)
     }
     println(logMsgPrefix + " Done downloading.")
 }
