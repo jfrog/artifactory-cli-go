@@ -81,9 +81,10 @@ func UploadFile(f *os.File, url, user, password string, details *FileDetails) *h
     req.Header.Set("X-Checksum-Md5", details.Md5)
 
     client := &http.Client{}
-    res, err := client.Do(req)
+    resp, err := client.Do(req)
     CheckError(err)
-    return res
+    defer resp.Body.Close()
+    return resp
 }
 
 func DownloadFile(downloadPath, localPath, fileName string, flat bool, user, password string) *http.Response {
@@ -99,7 +100,6 @@ func DownloadFile(downloadPath, localPath, fileName string, flat bool, user, pas
     out.Write(body)
     CheckError(err)
     return resp
-    return nil
 }
 
 func SendPut(url string, content []byte, headers map[string]string, user string, password string) (*http.Response, []byte) {
