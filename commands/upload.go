@@ -2,10 +2,10 @@ package commands
 
 import (
   "os"
+  "sync"
   "strings"
   "regexp"
   "strconv"
-  "sync"
   "net/http"
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
@@ -52,11 +52,19 @@ func prepareLocalPath(localpath string, useRegExp bool) string {
 }
 
 func localPathToRegExp(localpath string) string {
-    wildcard := ".*"
+    var wildcard = ".*"
+
     localpath = strings.Replace(localpath, ".", "\\.", -1)
     localpath = strings.Replace(localpath, "*", wildcard, -1)
-    if strings.HasSuffix(localpath, "/") || strings.HasSuffix(localpath, "\\") {
+    if strings.HasSuffix(localpath, "/") {
         localpath += wildcard
+    } else
+    if strings.HasSuffix(localpath, "\\") {
+       size := len(localpath)
+       if size > 1 && localpath[size-2 : size-1] != "\\" {
+            localpath += "\\"
+       }
+       localpath += wildcard
     }
     localpath = "^" + localpath + "$"
     return localpath
@@ -66,7 +74,6 @@ func getFilesToUpload(localpath string, targetPath string, recursive bool, flat 
     if strings.Index(targetPath, "/") < 0 {
         targetPath += "/"
     }
-
     rootPath := getRootPath(localpath, useRegExp)
     if !utils.IsPathExists(rootPath) {
         utils.Exit("Path does not exist: " + rootPath)
@@ -147,6 +154,9 @@ func getRootPath(path string, useRegExp bool) string {
             rootPath += seperator
         }
         rootPath += section
+    }
+    if len(sections) > 0 && sections[0] == "" {
+        rootPath = seperator + rootPath
     }
     if rootPath == "" {
         return "."
