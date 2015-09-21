@@ -66,15 +66,22 @@ These symbols are replaced with the sections enclosed with parenthesis in the fi
 
 This example uploads the *froggy.tgz* file to the root of the *my-local-repo* repository
 ```console
-$ art upload froggy.tgz my-local-repo/ --url=http://domain/artifactory --user=admin --password=password
+$ art upload "froggy.tgz" "my-local-repo/" --url=http://domain/artifactory --user=admin --password=password
+```
+And on Windows:
+```console
+$ art upload "froggy.tgz" "my-local-repo\\" --url=http://domain/artifactory --user=admin --password=password
 ```
 
-
 This example collects all the zip artifacts located under the build directory (including sub-directories)
-   and uploads them to the *my-local-repo* repository, under the zipFiles folder, while keeping the artifacts original names.
-   ```console
+and uploads them to the *my-local-repo* repository, under the zipFiles folder, while keeping the artifacts original names.
+```console
 $ art upload build/*.zip libs-release-local/zipFiles/ --url=http://domain/artifactory --user=admin --password=password
-   ```
+```
+And on Windows:
+```console
+$ art upload "build\\*.zip" "libs-release-local/zipFiles/" --url=http://domain/artifactory --user=admin --password=password
+```
 
 #### The Download command
 
@@ -105,10 +112,10 @@ The artifacts are downloaded and saved to the current directory, while saving th
 
 This example downloads the *cool-froggy.zip* artifact located at the root of the *my-local-repo* repository to current directory.
 ```console
-$ art download my-local-repo/cool-froggy.zip --url=http://domain/artifactory --user=admin --password=password
+$ art download "my-local-repo/cool-froggy.zip" --url=http://domain/artifactory --user=admin --password=password
 ```
 
 This example downloads all artifacts located in the *my-local-repo* repository under the *all-my-frogs* folder to the *all-my-frog* directory located unde the current directory.
 ```console
-$ art download my-local-repo/all-my-frogs/ --url=http://domain/artifactory --user=admin --password=password
+$ art download "my-local-repo/all-my-frogs/" --url=http://domain/artifactory --user=admin --password=password
 ```

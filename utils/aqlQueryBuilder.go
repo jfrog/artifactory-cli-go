@@ -109,35 +109,40 @@ func createPathFilePairs(pattern string, recursive bool) []PathFilePair {
         return pairs
     }
 
-    Index := strings.LastIndex(pattern, "/")
-    path := ""
-    if (Index > 0) {
-        path = pattern[0:Index]
-        name := pattern[Index+1:]
+    index := strings.LastIndex(pattern, "/")
+    var path string
+    var name string
+    if index < 0 {
+        pairs = append(pairs, PathFilePair{".", pattern})
+        path = ""
+        name = pattern
+    } else {
+        path = pattern[0:index]
+        name = pattern[index+1:]
         pairs = append(pairs, PathFilePair{path, name})
-        if !recursive {
-            return pairs
-        }
-        if name == "*" {
-            path += "/*"
-            pairs = append(pairs, PathFilePair{path, "*"})
-            return pairs
-        }
-        pattern = name
     }
+    if !recursive {
+        return pairs
+    }
+    if name == "*" {
+        path += "/*"
+        pairs = append(pairs, PathFilePair{path, "*"})
+        return pairs
+    }
+    pattern = name
 
     sections := strings.Split(pattern, "*")
     size := len(sections)
 
     for i := 0; i < size; i++ {
-        if (sections[i] == "") {
+        if sections[i] == "" {
             continue
         }
         options := []string{}
-        if (i > 0) {
+        if i > 0 {
             options = append(options, "/" + sections[i])
         }
-        if (i+1 < size) {
+        if i+1 < size {
             options = append(options, sections[i] + "/")
         }
         for _, option := range options {
@@ -153,7 +158,12 @@ func createPathFilePairs(pattern string, recursive bool) []PathFilePair {
                 }
             }
             split := strings.Split(str, "/")
-            pairs = append(pairs, PathFilePair{path + split[0], split[1]})
+            filePath := split[0]
+            fileName := split[1]
+            if fileName == "" {
+                fileName = "*"
+            }
+            pairs = append(pairs, PathFilePair{path + filePath, fileName})
         }
     }
     return pairs
