@@ -25,3 +25,21 @@ func GetLogMsgPrefix(threadId int, dryRun bool) string {
     }
     return "[Thread " + strconv.Itoa(threadId) + "]" + strDryRun
 }
+
+type Flags struct {
+    ArtDetails ArtifactpryDetails
+    DryRun bool
+    Props string
+    Recursive bool
+    Flat bool
+    UseRegExp bool
+    Threads int
+    MinSplitSize int64
+    SplitCount int
+}
+
+type ArtifactpryDetails struct {
+    Url string
+    User string
+    Password string
+}

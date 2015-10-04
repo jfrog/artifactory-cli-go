@@ -64,26 +64,24 @@ func GetFileDetailsFromArtifactory(downloadUrl string, user string, password str
     return fileDetails
 }
 
-func DownloadFileConcurrently(downloadPath string, localPath string, fileName string,
-    flat bool, user string, password string, fileSize int64, splitCount int, logMsgPrefix string) {
-
+func DownloadFileConcurrently(downloadPath, localPath, fileName, logMsgPrefix string, fileSize int64, flags *Flags) {
     tempLoclPath := GetTempDirPath() + "/" + localPath
 
     var wg sync.WaitGroup
-    chunkSize := fileSize / int64(splitCount)
-    mod := fileSize % int64(splitCount)
+    chunkSize := fileSize / int64(flags.SplitCount)
+    mod := fileSize % int64(flags.SplitCount)
 
-    for i := 0; i < splitCount ; i++ {
+    for i := 0; i < flags.SplitCount ; i++ {
         wg.Add(1)
         start := chunkSize * int64(i)
         end := chunkSize * (int64(i) + 1)
-        if i == splitCount-1 {
+        if i == flags.SplitCount-1 {
             end += mod
         }
         go func(start, end int64, i int) {
             headers := make(map[string]string)
             headers["Range"] = "bytes=" + strconv.FormatInt(start, 10) +"-" + strconv.FormatInt(end-1, 10)
-            resp, body := SendGet(downloadPath, headers, user, password)
+            resp, body := SendGet(downloadPath, headers, flags.ArtDetails.User, flags.ArtDetails.Password)
 
             println(logMsgPrefix + " [" + strconv.Itoa(i) + "]:", resp.Status + "...")
 
@@ -101,7 +99,7 @@ func DownloadFileConcurrently(downloadPath string, localPath string, fileName st
     }
     wg.Wait()
 
-    if !flat && localPath != "" {
+    if !flags.Flat && localPath != "" {
         os.MkdirAll(localPath ,0777)
         fileName = localPath + "/" + fileName
     }
@@ -114,7 +112,7 @@ func DownloadFileConcurrently(downloadPath string, localPath string, fileName st
     destFile, err := os.Create(fileName)
     CheckError(err)
     defer destFile.Close()
-    for i := 0; i < splitCount; i++ {
+    for i := 0; i < flags.SplitCount; i++ {
         tempFilePath := GetTempDirPath() + "/" + fileName + "_" + strconv.Itoa(i)
         AppendFile(tempFilePath, destFile)
     }

@@ -70,6 +70,7 @@ func UploadFile(f *os.File, url, user, password string, details *FileDetails) *h
     }
     req, err := http.NewRequest("PUT", url, f)
     CheckError(err)
+    req.ContentLength = details.Size
     req.Close = true
     if user != "" && password != "" {
 	    req.SetBasicAuth(user, password)

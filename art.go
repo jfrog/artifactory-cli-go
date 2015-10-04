@@ -9,18 +9,7 @@ import (
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-var dryRun bool
-var url string
-var username string
-var password string
-var props string
-var recursive bool
-var flat bool
-var useRegExp bool
-var threads int
-var minSplitSize int64
-var splitCount int
-var confFile string
+var flags = new(utils.Flags)
 
 func main() {
     defer utils.RemoveTempDir()
@@ -152,78 +141,81 @@ func getDownloadFlags() []cli.Flag {
 }
 
 func initFlags(c *cli.Context, cmd string) {
-    url = getMandatoryFlag(c, "url")
-    if !strings.HasSuffix(url, "/") {
-        url += "/"
+    if cmd == "config" {
+        flags.ArtDetails.Url = c.String("url")
+    } else {
+        flags.ArtDetails.Url = getMandatoryFlag(c, "url")
+    }
+    if flags.ArtDetails.Url != "" && !strings.HasSuffix(flags.ArtDetails.Url, "/") {
+        flags.ArtDetails.Url += "/"
     }
 
     strFlat := c.String("flat")
     if cmd == "upload" {
         if strFlat == "" {
-            flat = true
+            flags.Flat = true
         } else {
-            flat, _ = strconv.ParseBool(strFlat)
+            flags.Flat, _ = strconv.ParseBool(strFlat)
         }
-    } else
-    if cmd == "download" {
+    } else {
         if strFlat == "" {
-            flat = false
+            flags.Flat = false
         } else {
-             flat, _ = strconv.ParseBool(strFlat)
+             flags.Flat, _ = strconv.ParseBool(strFlat)
          }
     }
 
-    username = c.String("user")
-    password = c.String("password")
-    props = c.String("props")
-    dryRun = c.Bool("dry-run")
-    useRegExp = c.Bool("regexp")
+    flags.ArtDetails.User = c.String("user")
+    flags.ArtDetails.Password = c.String("password")
+    flags.Props = c.String("props")
+    flags.DryRun = c.Bool("dry-run")
+    flags.UseRegExp = c.Bool("regexp")
     var err error
     if c.String("threads") == "" {
-        threads = 3
+        flags.Threads = 3
     } else {
-        threads, err = strconv.Atoi(c.String("threads"))
-        if err != nil || threads < 1 || threads > 30 {
+        flags.Threads, err = strconv.Atoi(c.String("threads"))
+        if err != nil || flags.Threads < 1 || flags.Threads > 30 {
             utils.Exit("The '--threads' option should have a numeric value between 1 and 30. Try 'art download --help'.")
         }
     }
     if c.String("min-split") == "" {
-        minSplitSize = 5120
+        flags.MinSplitSize = 5120
     } else {
-        minSplitSize, err = strconv.ParseInt(c.String("min-split"), 10, 64)
+        flags.MinSplitSize, err = strconv.ParseInt(c.String("min-split"), 10, 64)
         if err != nil {
             utils.Exit("The '--min-split' option should have a numeric value. Try 'art download --help'.")
         }
     }
     if c.String("split-count") == "" {
-        splitCount = 3
+        flags.SplitCount = 3
     } else {
-        splitCount, err = strconv.Atoi(c.String("split-count"))
+        flags.SplitCount, err = strconv.Atoi(c.String("split-count"))
         if err != nil {
             utils.Exit("The '--split-count' option should have a numeric value. Try 'art download --help'.")
         }
-        if splitCount > 15 {
+        if flags.SplitCount > 15 {
             utils.Exit("The '--split-count' option value is limitted to a maximum of 15.")
         }
-        if splitCount < 0 {
+        if flags.SplitCount < 0 {
             utils.Exit("The '--split-count' option cannot have a negative value.")
         }
     }
 
     if c.String("recursive") == "" {
-        recursive = true
+        flags.Recursive = true
     } else {
-        recursive = c.Bool("recursive")
+        flags.Recursive = c.Bool("recursive")
     }
 }
 
 func config(c *cli.Context) {
-    props := make(map[string]string)
-    props["aa"] = "11"
-    props["bb"] = "22"
-    props["cc"] = "33"
-    props["dd"] = "44"
-    commands.Config(props)
+    initFlags(c, "config")
+    m := make(map[string]string)
+    m["url"] = flags.ArtDetails.Url
+    m["user"] = flags.ArtDetails.User
+    m["password"] = flags.ArtDetails.Password
+    commands.Config(m)
 }
 
 func download(c *cli.Context) {
@@ -232,7 +224,7 @@ func download(c *cli.Context) {
         utils.Exit("Wrong number of arguments. Try 'art download --help'.")
     }
     pattern := c.Args()[0]
-    commands.Download(url, pattern, props, username, password, recursive, flat, dryRun, minSplitSize, splitCount, threads)
+    commands.Download(pattern, flags)
 }
 
 func upload(c *cli.Context) {
@@ -243,7 +235,7 @@ func upload(c *cli.Context) {
     }
     localPath := c.Args()[0]
     targetPath := c.Args()[1]
-    commands.Upload(url, localPath, targetPath, recursive, flat, props, username, password, threads, useRegExp, dryRun)
+    commands.Upload(localPath, targetPath, flags)
 }
 
 // Get a CLI flagg. If the flag does not exist, utils.Exit with a message.

@@ -10,19 +10,19 @@ import (
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-func Upload(url, localPath, targetPath string, recursive bool, flat bool, props, user, password string, threads int, useRegExp, dryRun bool) {
+func Upload(localPath, targetPath string, flags *utils.Flags) {
     // Get the list of artifacts to be uploaded to Artifactory:
-    artifacts := getFilesToUpload(localPath, targetPath, recursive, flat, useRegExp)
+    artifacts := getFilesToUpload(localPath, targetPath, flags)
     size := len(artifacts)
 
     // Start a thread for each channel and start uploading:
     var wg sync.WaitGroup
-    for i := 0; i < threads; i++ {
+    for i := 0; i < flags.Threads; i++ {
         wg.Add(1)
         go func(threadId int) {
-            for j := threadId; j < size; j += threads {
-                target := url + artifacts[j].TargetPath
-                uploadFile(artifacts[j].LocalPath, target, props, user, password, dryRun, utils.GetLogMsgPrefix(threadId, dryRun))
+            for j := threadId; j < size; j += flags.Threads {
+                target := flags.ArtDetails.Url + artifacts[j].TargetPath
+                uploadFile(artifacts[j].LocalPath, target, flags, utils.GetLogMsgPrefix(threadId, flags.DryRun))
             }
             wg.Done()
         }(i)
@@ -73,15 +73,15 @@ func localPathToRegExp(localpath string) string {
     return localpath
 }
 
-func getFilesToUpload(localpath string, targetPath string, recursive bool, flat bool, useRegExp bool) []Artifact {
+func getFilesToUpload(localpath string, targetPath string, flags *utils.Flags) []Artifact {
     if strings.Index(targetPath, "/") < 0 {
         targetPath += "/"
     }
-    rootPath := getRootPath(localpath, useRegExp)
+    rootPath := getRootPath(localpath, flags.UseRegExp)
     if !utils.IsPathExists(rootPath) {
         utils.Exit("Path does not exist: " + rootPath)
     }
-    localpath = prepareLocalPath(localpath, useRegExp)
+    localpath = prepareLocalPath(localpath, flags.UseRegExp)
 
     artifacts := []Artifact{}
     // If the path is a single file then return it
@@ -95,7 +95,7 @@ func getFilesToUpload(localpath string, targetPath string, recursive bool, flat 
     utils.CheckError(err)
 
     var paths []string
-    if recursive {
+    if flags.Recursive {
         paths = utils.ListFilesRecursive(rootPath)
     } else {
         paths = utils.ListFiles(rootPath)
@@ -115,7 +115,7 @@ func getFilesToUpload(localpath string, targetPath string, recursive bool, flat 
                 target = strings.Replace(target, "{" + strconv.Itoa(i) + "}", group, -1)
             }
             if strings.HasSuffix(target, "/") {
-                if flat {
+                if flags.Flat {
                     target += utils.GetFileNameFromPath(path)
                 } else {
                     uploadPath := prepareUploadPath(path)
@@ -168,10 +168,9 @@ func getRootPath(path string, useRegExp bool) string {
     return rootPath
 }
 
-func uploadFile(localPath string, targetPath string, props string, user string, password string,
-    dryRun bool, logMsgPrefix string) {
-    if (props != "") {
-        targetPath += ";" + props
+func uploadFile(localPath string, targetPath string, flags *utils.Flags, logMsgPrefix string) {
+    if (flags.Props != "") {
+        targetPath += ";" + flags.Props
     }
     println(logMsgPrefix + " Uploading artifact: " + targetPath)
     file, err := os.Open(localPath)
@@ -184,13 +183,13 @@ func uploadFile(localPath string, targetPath string, props string, user string, 
     var resp *http.Response
     var details *utils.FileDetails
     if fileInfo.Size() >= 10240 {
-        resp, details = tryChecksumDeploy(localPath, targetPath, user, password, dryRun)
-        checksumDeployed = !dryRun && (resp.StatusCode == 201 || resp.StatusCode == 200)
+        resp, details = tryChecksumDeploy(localPath, targetPath, flags)
+        checksumDeployed = !flags.DryRun && (resp.StatusCode == 201 || resp.StatusCode == 200)
     }
-    if !dryRun && !checksumDeployed {
-        resp = utils.UploadFile(file, targetPath, user, password, details)
+    if !flags.DryRun && !checksumDeployed {
+        resp = utils.UploadFile(file, targetPath, flags.ArtDetails.User, flags.ArtDetails.Password, details)
     }
-    if !dryRun {
+    if !flags.DryRun {
         var strChecksumDeployed string
         if checksumDeployed {
             strChecksumDeployed = " (Checksum deploy)"
@@ -201,19 +200,17 @@ func uploadFile(localPath string, targetPath string, props string, user string, 
     }
 }
 
-func tryChecksumDeploy(filePath string, targetPath, user, password string,
-    dryRun bool) (*http.Response, *utils.FileDetails) {
-
+func tryChecksumDeploy(filePath, targetPath string, flags *utils.Flags) (*http.Response, *utils.FileDetails) {
     details := utils.GetFileDetails(filePath)
     headers := make(map[string]string)
     headers["X-Checksum-Deploy"] = "true"
     headers["X-Checksum-Sha1"] = details.Sha1
     headers["X-Checksum-Md5"] = details.Md5
 
-    if dryRun {
+    if flags.DryRun {
         return nil, details
     }
-    resp, _ := utils.SendPut(targetPath, nil, headers, user, password)
+    resp, _ := utils.SendPut(targetPath, nil, headers, flags.ArtDetails.User, flags.ArtDetails.Password)
     return resp, details
 }
 

@@ -7,36 +7,33 @@ import (
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-func Download(url, downloadPattern, props, user, password string, recursive, flat, dryRun bool,
-    minSplitSize int64, splitCount, threads int) {
-    aqlUrl := url + "api/search/aql"
-    data := utils.BuildAqlSearchQuery(downloadPattern, recursive, props)
+func Download(downloadPattern string, flags *utils.Flags) {
+    aqlUrl := flags.ArtDetails.Url + "api/search/aql"
+    data := utils.BuildAqlSearchQuery(downloadPattern, flags.Recursive, flags.Props)
 
     println("Searching Artifactory using AQL query: " + data)
-    resp, json := utils.SendPost(aqlUrl, []byte(data), user, password)
+    resp, json := utils.SendPost(aqlUrl, []byte(data), flags.ArtDetails.User, flags.ArtDetails.Password)
     println("Artifactory response:", resp.Status)
 
     if resp.StatusCode == 200 {
         resultItems := parseAqlSearchResponse(json)
-        downloadFiles(resultItems, url, user, password, flat, dryRun, minSplitSize, splitCount, threads)
+        downloadFiles(resultItems, flags)
         println("Downloaded " + strconv.Itoa(len(resultItems)) + " artifacts from Artifactory.")
     }
 }
 
-func downloadFiles(resultItems []AqlSearchResultItem, url, user, password string, flat bool, dryRun bool,
-    minSplitSize int64, splitCount, threads int) {
+func downloadFiles(resultItems []AqlSearchResultItem, flags *utils.Flags) {
     size := len(resultItems)
     var wg sync.WaitGroup
-    for i := 0; i < threads; i++ {
+    for i := 0; i < flags.Threads; i++ {
         wg.Add(1)
         go func(threadId int) {
-            for j := threadId; j < size; j += threads {
-                downloadPath := buildDownloadUrl(url, resultItems[j])
-                logMsgPrefix := utils.GetLogMsgPrefix(threadId, dryRun)
+            for j := threadId; j < size; j += flags.Threads {
+                downloadPath := buildDownloadUrl(flags.ArtDetails.Url, resultItems[j])
+                logMsgPrefix := utils.GetLogMsgPrefix(threadId, flags.DryRun)
                 println(logMsgPrefix + " Downloading " + downloadPath)
-                if !dryRun {
-                    downloadFile(downloadPath, resultItems[j].Path, resultItems[j].Name,
-                        user, password, flat, splitCount, minSplitSize, logMsgPrefix)
+                if !flags.DryRun {
+                    downloadFile(downloadPath, resultItems[j].Path, resultItems[j].Name, logMsgPrefix, flags)
                 }
             }
             wg.Done()
@@ -45,19 +42,16 @@ func downloadFiles(resultItems []AqlSearchResultItem, url, user, password string
     wg.Wait()
 }
 
-func downloadFile(downloadPath, localPath, localFileName, user, password string, flat bool,
-    splitCount int, minSplitSize int64, logMsgPrefix string) {
-
-    details := utils.GetFileDetailsFromArtifactory(downloadPath, user, password)
+func downloadFile(downloadPath, localPath, localFileName, logMsgPrefix string, flags *utils.Flags) {
+    details := utils.GetFileDetailsFromArtifactory(downloadPath, flags.ArtDetails.User, flags.ArtDetails.Password)
     localFilePath := localPath + "/" + localFileName
-    if shouldDownloadFile(localFilePath, details, user, password) {
-        if splitCount == 0 || minSplitSize < 0 || minSplitSize*1000 > details.Size || !details.AcceptRanges {
-            resp := utils.DownloadFile(downloadPath, localPath, localFileName, flat, user, password)
+    if shouldDownloadFile(localFilePath, details, flags.ArtDetails.User, flags.ArtDetails.Password) {
+        if flags.SplitCount == 0 || flags.MinSplitSize < 0 || flags.MinSplitSize*1000 > details.Size || !details.AcceptRanges {
+            resp := utils.DownloadFile(downloadPath, localPath, localFileName, flags.Flat, flags.ArtDetails.User, flags.ArtDetails.Password)
             println(logMsgPrefix + " Artifactory response:", resp.Status)
         } else {
             utils.DownloadFileConcurrently(
-                downloadPath, localPath, localFileName, flat, user, password,
-                    details.Size, splitCount, logMsgPrefix)
+                downloadPath, localPath, localFileName, logMsgPrefix, details.Size, flags)
         }
     } else {
         println(logMsgPrefix + " File already exists locally.")
