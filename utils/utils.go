@@ -27,7 +27,7 @@ func GetLogMsgPrefix(threadId int, dryRun bool) string {
 }
 
 type Flags struct {
-    ArtDetails ArtifactpryDetails
+    ArtDetails *ArtifactoryDetails
     DryRun bool
     Props string
     Recursive bool
@@ -36,9 +36,10 @@ type Flags struct {
     Threads int
     MinSplitSize int64
     SplitCount int
+    Interactive bool
 }
 
-type ArtifactpryDetails struct {
+type ArtifactoryDetails struct {
     Url string
     User string
     Password string

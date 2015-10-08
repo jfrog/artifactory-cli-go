@@ -21,7 +21,7 @@ func main() {
     app.Commands = []cli.Command{
         {
             Name: "config",
-            Flags: getFlags(),
+            Flags: getConfigFlags(),
             Aliases: []string{"c"},
             Usage: "config",
             Action: func(c *cli.Context) {
@@ -140,14 +140,40 @@ func getDownloadFlags() []cli.Flag {
     return flags
 }
 
-func initFlags(c *cli.Context, cmd string) {
-    if cmd == "config" {
-        flags.ArtDetails.Url = c.String("url")
-    } else {
-        flags.ArtDetails.Url = getMandatoryFlag(c, "url")
+func getConfigFlags() []cli.Flag {
+    flags := []cli.Flag{
+        nil,nil,nil,nil,
     }
-    if flags.ArtDetails.Url != "" && !strings.HasSuffix(flags.ArtDetails.Url, "/") {
-        flags.ArtDetails.Url += "/"
+    flags[0] = cli.StringFlag{
+         Name:  "interactive",
+         Usage: "[Default: true] Set to false if you do not want the config command to be interactive. If true, the --url option becomes optional.",
+    }
+    copy(flags[1:4], getFlags())
+    return flags
+}
+
+func initFlags(c *cli.Context, cmd string) {
+    if c.String("recursive") == "" {
+        flags.Recursive = true
+    } else {
+        flags.Recursive = c.Bool("recursive")
+    }
+    if c.String("interactive") == "" {
+        flags.Interactive = true
+    } else {
+        flags.Interactive = c.Bool("interactive")
+    }
+
+    if cmd == "config" {
+        flags.ArtDetails = getArtifactoryDetails(c, false)
+        if !flags.Interactive && flags.ArtDetails.Url == "" {
+            utils.Exit("The --url option is mandatory when the --interactive option is set to false")
+        }
+    } else {
+        flags.ArtDetails = getArtifactoryDetails(c, true)
+        if flags.ArtDetails.Url == "" {
+            utils.Exit("The --url option is mandatory")
+        }
     }
 
     strFlat := c.String("flat")
@@ -165,8 +191,6 @@ func initFlags(c *cli.Context, cmd string) {
          }
     }
 
-    flags.ArtDetails.User = c.String("user")
-    flags.ArtDetails.Password = c.String("password")
     flags.Props = c.String("props")
     flags.DryRun = c.Bool("dry-run")
     flags.UseRegExp = c.Bool("regexp")
@@ -201,21 +225,25 @@ func initFlags(c *cli.Context, cmd string) {
             utils.Exit("The '--split-count' option cannot have a negative value.")
         }
     }
-
-    if c.String("recursive") == "" {
-        flags.Recursive = true
-    } else {
-        flags.Recursive = c.Bool("recursive")
-    }
 }
 
 func config(c *cli.Context) {
-    initFlags(c, "config")
-    m := make(map[string]string)
-    m["url"] = flags.ArtDetails.Url
-    m["user"] = flags.ArtDetails.User
-    m["password"] = flags.ArtDetails.Password
-    commands.Config(m)
+    if len(c.Args()) > 1 {
+        utils.Exit("Wrong number of arguments. Try 'art config --help'.")
+    } else
+    if len(c.Args()) == 1 {
+        if c.Args()[0] == "show" {
+            commands.ShowConfig()
+        } else
+        if c.Args()[0] == "clear" {
+            commands.ClearConfig()
+        } else {
+            utils.Exit("Unknown argument '" + c.Args()[0] + "'. Available arguments are 'show' and 'clear'.")
+        }
+    } else {
+        initFlags(c, "config")
+        commands.Config(flags.ArtDetails, flags.Interactive)
+    }
 }
 
 func download(c *cli.Context) {
@@ -238,11 +266,28 @@ func upload(c *cli.Context) {
     commands.Upload(localPath, targetPath, flags)
 }
 
-// Get a CLI flagg. If the flag does not exist, utils.Exit with a message.
-func getMandatoryFlag(c *cli.Context, flag string) string {
-    value := c.String(flag)
-    if value == "" {
-        utils.Exit("The --" + flag + " flag is mandatory")
+func getArtifactoryDetails(c *cli.Context, includeConfig bool) *utils.ArtifactoryDetails {
+    details := new(utils.ArtifactoryDetails)
+    details.Url = c.String("url")
+    details.User = c.String("user")
+    details.Password = c.String("password")
+
+    if includeConfig {
+        if details.Url == "" || details.User == "" || details.Password == "" {
+            confDetails := commands.GetConfig()
+            if details.Url == "" {
+                details.Url = confDetails.Url
+            }
+            if details.User == "" {
+                details.User = confDetails.User
+            }
+            if details.Password == "" {
+                details.Password = confDetails.Password
+            }
+        }
     }
-    return value
+    if details.Url != "" && !strings.HasSuffix(details.Url, "/") {
+        details.Url += "/"
+    }
+    return details
 }

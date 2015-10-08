@@ -73,7 +73,7 @@ And on Windows:
 $ art upload "froggy.tgz" "my-local-repo\\" --url=http://domain/artifactory --user=admin --password=password
 ```
 
-This example collects all the zip artifacts located under the build directory (including sub-directories)
+This example collects all the zip artifacts located under the build directory (including sub-directories).
 and uploads them to the *my-local-repo* repository, under the zipFiles folder, while keeping the artifacts original names.
 ```console
 $ art upload build/*.zip libs-release-local/zipFiles/ --url=http://domain/artifactory --user=admin --password=password
@@ -87,7 +87,6 @@ $ art upload "build\\*.zip" "libs-release-local/zipFiles/" --url=http://domain/a
 
 ##### Function
 Used to download artifacts from Artifactory.
-
 
 ##### Command options
 ```console
@@ -118,4 +117,33 @@ $ art download "my-local-repo/cool-froggy.zip" --url=http://domain/artifactory -
 This example downloads all artifacts located in the *my-local-repo* repository under the *all-my-frogs* folder to the *all-my-frog* directory located unde the current directory.
 ```console
 $ art download "my-local-repo/all-my-frogs/" --url=http://domain/artifactory --user=admin --password=password
+```
+
+#### The Config command
+
+##### Function
+Used to configure the Artifactory URL, user and passwords, so that you don't have to send them as options
+for the *upload* and *download* commands.
+
+##### Command options
+```console
+   --interactive  [Default: true] Set to false if you do not wish the config command to be interactive. If true, the --url option becomes optional.
+   --url          [Optional] Artifactory URL.
+   --user         [Optional] Artifactory user.
+   --password     [Optional] Artifactory password.
+```
+
+##### Arguments
+If no arguments are sent, the command will configure the Artifactory URL, user and password sent through the command options
+or through the command's interactive prompt.
+The *show* argument will cause the command to show the stored configuration.
+The *clear* argument will cause the command to clear the stored configuration.
+
+##### Examples
+
+```console
+$ art config
+$ art config --url=http://domain/artifactory --user=admin --password=password
+$ art config show
+$ art config clear
 ```
