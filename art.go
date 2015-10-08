@@ -1,12 +1,12 @@
 package main
 
 import (
-  "strings"
-  "os"
-  "strconv"
-  "github.com/codegangsta/cli"
-  "github.com/JFrogDev/artifactory-cli-go/commands"
-  "github.com/JFrogDev/artifactory-cli-go/utils"
+	"github.com/JFrogDev/artifactory-cli-go/Godeps/_workspace/src/github.com/codegangsta/cli"
+	"github.com/JFrogDev/artifactory-cli-go/commands"
+	"github.com/JFrogDev/artifactory-cli-go/utils"
+	"os"
+	"strconv"
+	"strings"
 )
 
 var flags = new(utils.Flags)

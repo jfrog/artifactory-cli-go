@@ -124,6 +124,7 @@ $ art download "my-local-repo/all-my-frogs/" --url=http://domain/artifactory --u
 ##### Function
 Used to configure the Artifactory URL, user and passwords, so that you don't have to send them as options
 for the *upload* and *download* commands.
+The configuration is saved at ~/.jfrog/art-cli.conf
 
 ##### Command options
 ```console
