@@ -200,8 +200,8 @@ func initFlags(c *cli.Context, cmd string) {
         flags.Threads = 3
     } else {
         flags.Threads, err = strconv.Atoi(c.String("threads"))
-        if err != nil || flags.Threads < 1 || flags.Threads > 30 {
-            utils.Exit("The '--threads' option should have a numeric value between 1 and 30. Try 'art download --help'.")
+        if err != nil || flags.Threads < 1 {
+            utils.Exit("The '--threads' option should have a numeric positive value.")
         }
     }
     if c.String("min-split") == "" {
