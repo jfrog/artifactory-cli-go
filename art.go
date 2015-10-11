@@ -17,6 +17,7 @@ func main() {
     app := cli.NewApp()
     app.Name = "art"
     app.Usage = "See https://github.com/JFrogDev/artifactory-cli-go for usage instructions."
+    app.Version = "1.0.0"
 
     app.Commands = []cli.Command{
         {
