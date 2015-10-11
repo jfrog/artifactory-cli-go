@@ -3,6 +3,7 @@ package utils
 import (
   "os"
   "strconv"
+  "runtime"
 )
 
 func CheckError(err error) {
@@ -24,6 +25,13 @@ func GetLogMsgPrefix(threadId int, dryRun bool) string {
         strDryRun = ""
     }
     return "[Thread " + strconv.Itoa(threadId) + "]" + strDryRun
+}
+
+func GetFileSeperator() string {
+    if runtime.GOOS == "windows" {
+        return "\\"
+    }
+    return "/"
 }
 
 type Flags struct {

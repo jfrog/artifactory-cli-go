@@ -135,16 +135,29 @@ The configuration is saved at ~/.jfrog/art-cli.conf
 ```
 
 ##### Arguments
-If no arguments are sent, the command will configure the Artifactory URL, user and password sent through the command options
+* If no arguments are sent, the command will configure the Artifactory URL, user and password sent through the command options
 or through the command's interactive prompt.
-The *show* argument will cause the command to show the stored configuration.
-The *clear* argument will cause the command to clear the stored configuration.
+* The *show* argument will make the command show the stored configuration.
+* The *clear* argument will make the command clear the stored configuration.
 
 ##### Examples
 
+Configure the Artifactory details through an interactive propmp.
 ```console
 $ art config
+```
+
+Configure the Artifactory details through the command options.
+```console
 $ art config --url=http://domain/artifactory --user=admin --password=password
+```
+
+Show the configured Artifactory details.
+```console
 $ art config show
+```
+
+Clear the configured Artifactory details.
+```console
 $ art config clear
 ```

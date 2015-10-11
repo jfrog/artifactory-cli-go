@@ -159,13 +159,18 @@ func ListFilesRecursive(path string) []string {
 
 // Return the list of files and directories in the specified path
 func ListFiles(path string) []string {
-    if !strings.HasSuffix(path, "/") {
-        path += "/"
+    sep := GetFileSeperator()
+    if !strings.HasSuffix(path, sep) {
+        path += sep
     }
     fileList := []string{}
-    files, _ := ioutil.ReadDir("./")
+    files, _ := ioutil.ReadDir(path)
+
     for _, f := range files {
-        fileList = append(fileList, path + f.Name())
+        filePath := path + f.Name()
+        if IsFileExists(filePath) {
+            fileList = append(fileList, filePath)
+        }
     }
     return fileList
 }

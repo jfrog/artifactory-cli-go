@@ -10,25 +10,43 @@ import (
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-func Upload(localPath, targetPath string, flags *utils.Flags) {
+// Uploads the artifacts in the specified local path pattern to the specified target path.
+// Returns the total number of artifacts successfully uploaded.
+func Upload(localPath, targetPath string, flags *utils.Flags) int {
     // Get the list of artifacts to be uploaded to Artifactory:
     artifacts := getFilesToUpload(localPath, targetPath, flags)
     size := len(artifacts)
 
     // Start a thread for each channel and start uploading:
     var wg sync.WaitGroup
+
+    // Create an array of integers, to store the total file that were uploaded successfully.
+    // Each array item is used by a single thread.
+    uploadCount := make([]int, flags.Threads, flags.Threads)
+
     for i := 0; i < flags.Threads; i++ {
         wg.Add(1)
         go func(threadId int) {
             for j := threadId; j < size; j += flags.Threads {
                 target := flags.ArtDetails.Url + artifacts[j].TargetPath
-                uploadFile(artifacts[j].LocalPath, target, flags, utils.GetLogMsgPrefix(threadId, flags.DryRun))
+                if uploadFile(artifacts[j].LocalPath, target, flags, utils.GetLogMsgPrefix(threadId, flags.DryRun)) {
+                    uploadCount[threadId]++
+                }
             }
             wg.Done()
         }(i)
     }
     wg.Wait()
-    println("Uploaded " + strconv.Itoa(size) + " artifacts to Artifactory.")
+    totalSuccessful := 0
+    for _, i := range uploadCount {
+        totalSuccessful += i
+    }
+
+    println("Uploaded " + strconv.Itoa(totalSuccessful) + " artifacts to Artifactory.")
+    if size-totalSuccessful > 0 {
+        println("Failed uploading " + strconv.Itoa(size-totalSuccessful) + " artifacts to Artifactory.")
+    }
+    return totalSuccessful
 }
 
 func prepareUploadPath(path string) string {
@@ -168,10 +186,13 @@ func getRootPath(path string, useRegExp bool) string {
     return rootPath
 }
 
-func uploadFile(localPath string, targetPath string, flags *utils.Flags, logMsgPrefix string) {
+// Uploads the file in the specified local path to the specified target path.
+// Returns true if the file was successfully uploaded.
+func uploadFile(localPath string, targetPath string, flags *utils.Flags, logMsgPrefix string) bool {
     if (flags.Props != "") {
         targetPath += ";" + flags.Props
     }
+
     println(logMsgPrefix + " Uploading artifact: " + targetPath)
     file, err := os.Open(localPath)
     utils.CheckError(err)
@@ -198,6 +219,8 @@ func uploadFile(localPath string, targetPath string, flags *utils.Flags, logMsgP
         }
         println(logMsgPrefix + " Artifactory response: " + resp.Status + strChecksumDeployed)
     }
+
+    return flags.DryRun || checksumDeployed || resp.StatusCode == 201 || resp.StatusCode == 200
 }
 
 func tryChecksumDeploy(filePath, targetPath string, flags *utils.Flags) (*http.Response, *utils.FileDetails) {

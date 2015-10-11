@@ -7,19 +7,24 @@ import (
   "github.com/JFrogDev/artifactory-cli-go/utils"
 )
 
-func Download(downloadPattern string, flags *utils.Flags) {
+// Downloads the artifacts using the specified download pattern.
+// Returns the AQL query used for the download.
+func Download(downloadPattern string, flags *utils.Flags) string {
     aqlUrl := flags.ArtDetails.Url + "api/search/aql"
     data := utils.BuildAqlSearchQuery(downloadPattern, flags.Recursive, flags.Props)
-
     println("Searching Artifactory using AQL query: " + data)
-    resp, json := utils.SendPost(aqlUrl, []byte(data), flags.ArtDetails.User, flags.ArtDetails.Password)
-    println("Artifactory response:", resp.Status)
 
-    if resp.StatusCode == 200 {
-        resultItems := parseAqlSearchResponse(json)
-        downloadFiles(resultItems, flags)
-        println("Downloaded " + strconv.Itoa(len(resultItems)) + " artifacts from Artifactory.")
+    if !flags.DryRun {
+        resp, json := utils.SendPost(aqlUrl, []byte(data), flags.ArtDetails.User, flags.ArtDetails.Password)
+        println("Artifactory response:", resp.Status)
+
+        if resp.StatusCode == 200 {
+            resultItems := parseAqlSearchResponse(json)
+            downloadFiles(resultItems, flags)
+            println("Downloaded " + strconv.Itoa(len(resultItems)) + " artifacts from Artifactory.")
+        }
     }
+    return data
 }
 
 func downloadFiles(resultItems []AqlSearchResultItem, flags *utils.Flags) {
