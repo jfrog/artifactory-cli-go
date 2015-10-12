@@ -45,7 +45,7 @@ Used to upload artifacts to Artifactory.
    --user         [Optional] Artifactory user.
    --password     [Optional] Artifactory password.
    --props        [Optional] List of properties in the form of key1=value1;key2=value2,... to be attached to the uploaded artifacts.
-   --flat         [Default: false] If not set to true, and the upload path ends with a slash, artifacts are uploaded according to their file system hierarchy.
+   --flat         [Default: true] If not set to true, and the upload path ends with a slash, artifacts are uploaded according to their file system hierarchy.
    --recursive    [Default: true] Set to false if you do not wish to collect artifacts in sub-folders to be uploaded to Artifactory.
    --regexp       [Default: false] Set to true to use a regular expression instead of wildcards expression to collect artifacts to upload.
    --threads      [Default: 3] Number of artifacts to upload in parallel.
@@ -58,7 +58,7 @@ The path can include a single file or multiple artifacts, by using the * wildcar
 the first regular expression appearing as part of the argument must be enclosed in parenthesis.
 
 * The second argument is the upload path in Artifactory.
-The argument should have the following format: [repository name]:[repository path]
+The argument should have the following format: [repository name]/[repository path]
 The path can include symbols in the form of {1}, {2}, ...
 These symbols are replaced with the sections enclosed with parenthesis in the first argument.
 
