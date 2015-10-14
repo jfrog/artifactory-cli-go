@@ -2,6 +2,7 @@ package utils
 
 import (
   "os"
+  "os/user"
   "strconv"
   "runtime"
 )
@@ -32,6 +33,18 @@ func GetFileSeperator() string {
         return "\\"
     }
     return "/"
+}
+
+func GetHomeDir() string {
+    user, err := user.Current()
+    if err == nil {
+        return user.HomeDir
+    }
+    home := os.Getenv("HOME")
+    if home != "" {
+        return home
+    }
+    return "";
 }
 
 type Flags struct {

@@ -4,7 +4,6 @@ import (
     "os"
     "fmt"
     "bytes"
-    "os/user"
     "io/ioutil"
     "encoding/json"
     "github.com/JFrogDev/artifactory-cli-go/utils"
@@ -50,9 +49,11 @@ func GetConfig() *utils.ArtifactoryDetails {
 }
 
 func getConFilePath() string {
-    userDir, err := user.Current()
-    utils.CheckError(err)
-    confPath := userDir.HomeDir + "/.jfrog/"
+    userDir := utils.GetHomeDir()
+    if userDir == "" {
+        utils.Exit("Couldn't find home directory. Make sure your HOME environment variable is set.")
+    }
+    confPath := userDir + "/.jfrog/"
     os.MkdirAll(confPath ,0777)
     return confPath + "art-cli.conf"
 }
