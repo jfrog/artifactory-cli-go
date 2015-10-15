@@ -3,10 +3,6 @@ language: go
 go:
   - 1.4.2
 
-branches:
-  only:
-    -  cli-deployment
-  
 
 env:
     matrix:
@@ -33,5 +29,5 @@ deploy:
   key: "$API_KEY"
   passphrase: "$PASSPHRASE"
   user: jfrog
-  on:
-    tags: true
+  # on:
+    # tags: true
