@@ -8,8 +8,6 @@ fi
 
 if [ "${GIMME_OS}" = "windows" ] ; then
 	mv artifactory-cli-go.exe art.exe
-	art_executable = "art.exe"
 else 
 	mv artifactory-cli-go art
-	art_executable = "art"
 fi
