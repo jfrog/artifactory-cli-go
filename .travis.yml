@@ -2,7 +2,7 @@ language: go
 
 go:
   - 1.4.2
-
+  
 env:
     matrix:
        - GIMME_OS=windows GIMME_ARCH=amd64
@@ -27,6 +27,6 @@ deploy:
   provider: bintray
   key: "$API_KEY"
   passphrase: "$PASSPHRASE"
-  user: jfrog
+  user: jfrogdev
   on:
     tags: true

@@ -10,6 +10,6 @@
         "gpgSign": true
     },
     "files":
-        [{"includePattern": "/home/travis/gopath/bin/windows_amd64/art.exe", "uploadPattern": "artifactory-cli-windows-amd64/art.exe"}],
+        [{"includePattern": "/home/travis/gopath/bin/windows_amd64/art.exe", "uploadPattern": "windows_amd64/art.exe"}],
     "publish": true
 }
