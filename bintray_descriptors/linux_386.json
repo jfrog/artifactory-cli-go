@@ -1,0 +1,15 @@
+{
+    "package": {
+        "name": "artifactory-cli-linux-386",
+        "repo": "artifactory-cli-go",
+        "subject": "jfrog"
+    },
+    "version": {
+        "name": "1.0.0",
+        "vcs_tag": "1.0.0",
+        "gpgSign": true
+    },
+    "files":
+        [{"includePattern": "/home/travis/gopath/bin/linux_386/art", "uploadPattern": "artifactory-cli-linux-386/art"}],
+    "publish": true
+}
