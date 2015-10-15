@@ -3,6 +3,11 @@ language: go
 go:
   - 1.4.2
 
+branches:
+  only:
+    -  cli-deployment
+  
+
 env:
     matrix:
        - GIMME_OS=windows GIMME_ARCH=amd64
