@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/JFrogDev/artifactory-cli-go.svg)](https://travis-ci.org/JFrogDev/artifactory-cli-go)
+
 ## Artifactory CLI
 
 Artifactory CLI provides a command line interface for uploading and downloading artifacts to and from Artifactory.
