@@ -4,8 +4,12 @@
 
 Artifactory CLI provides a command line interface for uploading and downloading artifacts to and from Artifactory.
 It supports Artifactory version 3.5.3 and above.
+### Getting Started
+#### Download the executables from Bintray
+If you do not wish to install/use go, you can [download executables](https://bintray.com/jfrog/artifactory-cli-go) for linux, mac and windows from JFrog Bintray.  Select the architecture you want, download the art executable, and place it in your path.
 
-### Build the command line executable
+#### Build the command line executable
+If you prefer, you may instead build the client in go:
 
 Make sure you have a working Go environment. [See the install instructions](http://golang.org/doc/install).
 
