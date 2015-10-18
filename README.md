@@ -5,43 +5,58 @@
 Artifactory CLI provides a command line interface for uploading and downloading artifacts to and from Artifactory.
 It supports Artifactory version 3.5.3 and above.
 
-### Build the command line executable
+### Getting Started
 
-Make sure you have a working Go environment. [See the install instructions](http://golang.org/doc/install).
+#### Downloading the executables from Bintray
 
-CD to the directory where you want to create the *artifactory-cli-go* project.
-Set the value of the *GOPATH* environment variable to the full path of this  directory.
+If you do not wish to install/use go, you can [download executables](https://bintray.com/jfrog/artifactory-cli-go)
+for Linux, Mac and Windows from JFrog Bintray. Select the architecture you want, download the art executable, and place it in your path.
+
+#### Building the command line executable
+
+If you prefer, you may instead build the client in go.
+
+##### Setup GO on your machine
+
+* Make sure you have a working Go environment. [See the install instructions](http://golang.org/doc/install).
+* Navigate to the directory where you want to create the *artifactory-cli-go* project.
+* Set the value of the GOPATH environment variable to the full path of this directory.
+
+##### Download Artifactory CLI from GitHub
 
 Run the following command to create the *artifactory-cli-go* project:
 ```console
 $ go get github.com/JFrogDev/artifactory-cli-go
 ```
 
-CD into the following directory
+Navigate to the following directory
 ```console
 $ cd $GOPATH/bin
 ```
 
-Rename the executable file located in the current directory to *art* (or *art.exe* on Windows):
+Rename the executable file located in the current directory to art (or art.exe on Windows):
 
-### Usage
+#### Usage
 
-You can copy the *art* executable to a different location on your file-system and add it
-to your *PATH* environment variable, so that you can access it from any path.
+You can copy the *art* executable to any location on your file-system as long as you add it to your *PATH* environment variable,
+so that you can access it from any path.
 
-#### General command structure
-*art* should be followed by a command name (for example, upload), a list of options (for example, --url=http://...)
-and the list of arguments for the command.
+##### Command syntax
+
 ```console
 $ art command-name options arguments
 ```
 
-#### The Upload command
+The sections below specify the available commands, their respective options and additional arguments that may be needed.
+*art* should be followed by a command name (for example, upload), a list of options (for example, --url=http://...)
+and the list of arguments for the command.
 
-##### Function
+##### The *upload* command
+
+###### Function
 Used to upload artifacts to Artifactory.
 
-##### Command options
+###### Command options
 ```console
    --url          [Mandatory] Artifactory URL.
    --user         [Optional] Artifactory user.
@@ -53,7 +68,7 @@ Used to upload artifacts to Artifactory.
    --threads      [Default: 3] Number of artifacts to upload in parallel.
    --dry-run      [Default: false] Set to true to disable communication with Artifactory.
 ```
-##### Arguments
+###### Arguments
 * The first argument is the local file-system path to the artifacts to be uploaded to Artifactory.
 The path can include a single file or multiple artifacts, by using the * wildcard.
 **Important:** If the path is provided as a regular expression (with the --regexp=true option) then
@@ -64,7 +79,7 @@ The argument should have the following format: [repository name]/[repository pat
 The path can include symbols in the form of {1}, {2}, ...
 These symbols are replaced with the sections enclosed with parenthesis in the first argument.
 
-##### Examples
+###### Examples
 
 This example uploads the *froggy.tgz* file to the root of the *my-local-repo* repository
 ```console
@@ -81,12 +96,12 @@ And on Windows:
 $ art upload "build\\*.zip" "libs-release-local/zipFiles/" --url=http://domain/artifactory --user=admin --password=password
 ```
 
-#### The Download command
+##### The *download* command
 
-##### Function
+###### Function
 Used to download artifacts from Artifactory.
 
-##### Command options
+###### Command options
 ```console
    --url          [Mandatory] Artifactory URL
    --user         [Optional] Artifactory user
@@ -99,13 +114,13 @@ Used to download artifacts from Artifactory.
    --threads      [Default: 3] Number of artifacts to download in parallel.
 ```
 
-##### Arguments
+###### Arguments
 The command expects one argument - the path of artifacts to be downloaded from Artifactory.
 The argument should have the following format: [repository name]/[repository path]
 The path can include a single artifact or multiple artifacts, by using the * wildcard.
 The artifacts are downloaded and saved to the current directory, while saving their folder structure.
 
-##### Examples
+###### Examples
 
 This example downloads the *cool-froggy.zip* artifact located at the root of the *my-local-repo* repository to current directory.
 ```console
@@ -117,14 +132,14 @@ This example downloads all artifacts located in the *my-local-repo* repository u
 $ art download "my-local-repo/all-my-frogs/" --url=http://domain/artifactory --user=admin --password=password
 ```
 
-#### The Config command
+##### The *config* command
 
-##### Function
+###### Function
 Used to configure the Artifactory URL, user and passwords, so that you don't have to send them as options
 for the *upload* and *download* commands.
 The configuration is saved at ~/.jfrog/art-cli.conf
 
-##### Command options
+###### Command options
 ```console
    --interactive  [Default: true] Set to false if you do not wish the config command to be interactive. If true, the --url option becomes optional.
    --url          [Optional] Artifactory URL.
@@ -132,13 +147,13 @@ The configuration is saved at ~/.jfrog/art-cli.conf
    --password     [Optional] Artifactory password.
 ```
 
-##### Arguments
+###### Arguments
 * If no arguments are sent, the command will configure the Artifactory URL, user and password sent through the command options
 or through the command's interactive prompt.
 * The *show* argument will make the command show the stored configuration.
 * The *clear* argument will make the command clear the stored configuration.
 
-##### Examples
+###### Examples
 
 Configure the Artifactory details through an interactive propmp.
 ```console
