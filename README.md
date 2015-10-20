@@ -160,7 +160,8 @@ Configure the Artifactory details through an interactive propmp.
 $ art config
 ```
 
-Configure the Artifactory details through the command options.
+Configure the Artifactory details through the command options.  Note that if your artifactory server has [encrypted password set to required](https://www.jfrog.com/confluence/display/RTF/Configuring+Security#ConfiguringSecurity-PasswordEncryptionPolicy) you should use your API Key not your password
+
 ```console
 $ art config --url=http://domain/artifactory --user=admin --password=password
 ```
