@@ -153,6 +153,10 @@ or through the command's interactive prompt.
 * The *show* argument will make the command show the stored configuration.
 * The *clear* argument will make the command clear the stored configuration.
 
+###### Important Note
+
+if your Artifactory server has [encrypted password set to required](https://www.jfrog.com/confluence/display/RTF/Configuring+Security#ConfiguringSecurity-PasswordEncryptionPolicy) you should use your API Key as your password.
+
 ###### Examples
 
 Configure the Artifactory details through an interactive propmp.
@@ -161,6 +165,7 @@ $ art config
 ```
 
 Configure the Artifactory details through the command options.
+
 ```console
 $ art config --url=http://domain/artifactory --user=admin --password=password
 ```
