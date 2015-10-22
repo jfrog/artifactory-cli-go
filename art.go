@@ -6,7 +6,6 @@ import (
 	"github.com/JFrogDev/artifactory-cli-go/utils"
 	"os"
 	"strconv"
-	"strings"
 )
 
 var flags = new(utils.Flags)
@@ -80,7 +79,7 @@ func getUploadFlags() []cli.Flag {
     }
     flags[4] = cli.StringFlag{
          Name:  "deb",
-         Usage: "[Optional] Used for eacy upload for debian packages, insert automatically debian properties (distribution, component, architecture).",
+         Usage: "[Optional] Used for Debian packages in the form of distribution/component/architecture.",
     }
     flags[5] = cli.StringFlag{
         Name:  "recursive",
@@ -205,9 +204,7 @@ func initFlags(c *cli.Context, cmd string) {
          }
     }
     
-    if c.String("deb") != "" {
-        flags.DebianUploadPath = c.String("deb")
-    }
+    flags.Deb = c.String("deb")
     flags.Props = c.String("props")
     flags.DryRun = c.Bool("dry-run")
     flags.UseRegExp = c.Bool("regexp")
@@ -303,8 +300,6 @@ func getArtifactoryDetails(c *cli.Context, includeConfig bool) *utils.Artifactor
             }
         }
     }
-    if details.Url != "" && !strings.HasSuffix(details.Url, "/") {
-        details.Url += "/"
-    }
+    utils.AddTrailingSlashIfNeeded(details.Url)
     return details
 }

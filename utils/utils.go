@@ -2,6 +2,7 @@ package utils
 
 import (
   "os"
+  "strings"
   "os/user"
   "strconv"
   "runtime"
@@ -47,11 +48,18 @@ func GetHomeDir() string {
     return "";
 }
 
+func AddTrailingSlashIfNeeded(url string) string {
+    if url != "" && !strings.HasSuffix(url, "/") {
+        url += "/"
+    }
+    return url
+}
+
 type Flags struct {
     ArtDetails *ArtifactoryDetails
     DryRun bool
     Props string
-    DebianUploadPath string
+    Deb string
     Recursive bool
     Flat bool
     UseRegExp bool

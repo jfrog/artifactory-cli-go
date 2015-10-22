@@ -191,12 +191,11 @@ func getDebianProperties(targetPath, debianUploadPath string) (debianProperties 
     if len(debProps) != 3 { 
         utils.Exit("Error occurred while adding debian properties.")
     }
-    debianProperties = ";deb_distribution=" + debProps[0] + ";deb_component=" + debProps[1] + ";deb_architecture=" + debProps[2]
-    return 
-}
+    debianProperties = ";deb.distribution=" + debProps[0] +
+        ";deb.component=" + debProps[1] +
+        ";deb.architecture=" + debProps[2]
 
-func isDebianUpload(debUploadPath string) bool {
-   return debUploadPath != ""
+    return 
 }
 
 // Uploads the file in the specified local path to the specified target path.
@@ -206,8 +205,8 @@ func uploadFile(localPath string, targetPath string, flags *utils.Flags, logMsgP
         targetPath += ";" + flags.Props
     }
     
-    if isDebianUpload(flags.DebianUploadPath) {
-        targetPath += getDebianProperties(targetPath, flags.DebianUploadPath)
+    if flags.Deb != "" {
+        targetPath += getDebianProperties(targetPath, flags.Deb)
     }
 
     println(logMsgPrefix + " Uploading artifact: " + targetPath)
