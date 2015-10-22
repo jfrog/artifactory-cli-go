@@ -17,6 +17,7 @@ before_script:
 
 script:
   - go build -v ./...
+  - [ "${GIMME_OS}" = "linux" ] && go test -v ./... 
 
 before_deploy:
   - chmod +x ./prepare_bintray_deployment.sh

@@ -143,13 +143,17 @@ func getDownloadFlags() []cli.Flag {
 
 func getConfigFlags() []cli.Flag {
     flags := []cli.Flag{
-        nil,nil,nil,nil,
+        nil,nil,nil,nil,nil,
     }
     flags[0] = cli.StringFlag{
          Name:  "interactive",
          Usage: "[Default: true] Set to false if you do not want the config command to be interactive. If true, the --url option becomes optional.",
     }
-    copy(flags[1:4], getFlags())
+    flags[1] = cli.StringFlag{
+        Name: "enc-password",
+        Usage: "[Default: true] If set to false then the configured password will not be encrypted using Artifatory encryption API.",
+    }
+    copy(flags[2:5], getFlags())
     return flags
 }
 
@@ -163,6 +167,11 @@ func initFlags(c *cli.Context, cmd string) {
         flags.Interactive = true
     } else {
         flags.Interactive = c.Bool("interactive")
+    }
+    if c.String("enc-password") == "" {
+        flags.EncPassword = true
+    } else {
+        flags.EncPassword = c.Bool("enc-password")
     }
 
     if cmd == "config" {
@@ -243,7 +252,7 @@ func config(c *cli.Context) {
         }
     } else {
         initFlags(c, "config")
-        commands.Config(flags.ArtDetails, flags.Interactive)
+        commands.Config(flags.ArtDetails, flags.Interactive, flags.EncPassword)
     }
 }
 

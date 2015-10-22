@@ -4,6 +4,7 @@ import (
     "os"
     "io"
     "strconv"
+    "errors"
     "sync"
     "crypto/md5"
     "crypto/sha1"
@@ -62,6 +63,18 @@ func GetFileDetailsFromArtifactory(downloadUrl string, user string, password str
     fileDetails.Size = fileSize
     fileDetails.AcceptRanges = resp.Header.Get("Accept-Ranges") == "bytes"
     return fileDetails
+}
+
+func GetArtifactoryEncryptedPassword(artifactoryUrl, username, password string) (string, error, bool) {
+	apiUrl := artifactoryUrl + "/api/security/encryptedPassword"
+	resp, body := SendGet(apiUrl, nil, username, password)
+	if resp.StatusCode == 200 {
+		return string(body), nil, false
+	}
+    if resp.StatusCode == 409 {
+        return "", errors.New("\nArtifactory you are trying to reach does not suppport Encrypted passwords\n"), true
+    }
+	return "", errors.New(string(body)), false
 }
 
 func DownloadFileConcurrently(downloadPath, localPath, fileName, logMsgPrefix string, fileSize int64, flags *Flags) {

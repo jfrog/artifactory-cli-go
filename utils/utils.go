@@ -58,6 +58,7 @@ type Flags struct {
     MinSplitSize int64
     SplitCount int
     Interactive bool
+    EncPassword bool
 }
 
 type ArtifactoryDetails struct {
