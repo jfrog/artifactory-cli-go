@@ -51,6 +51,7 @@ type Flags struct {
     ArtDetails *ArtifactoryDetails
     DryRun bool
     Props string
+    DebianUploadPath string
     Recursive bool
     Flat bool
     UseRegExp bool

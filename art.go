@@ -71,33 +71,37 @@ func getFlags() []cli.Flag {
 
 func getUploadFlags() []cli.Flag {
     flags := []cli.Flag{
-        nil,nil,nil,nil,nil,nil,nil,nil,nil,
+        nil, nil,nil,nil,nil,nil,nil,nil,nil,nil,
     }
-    copy(flags[0:3], getFlags())
+    copy(flags[0:3], getFlags())    
     flags[3] = cli.StringFlag{
          Name:  "props",
          Usage: "[Optional] List of properties in the form of key1=value1;key2=value2,... to be attached to the uploaded artifacts.",
     }
     flags[4] = cli.StringFlag{
+         Name:  "deb",
+         Usage: "[Optional] Used for eacy upload for debian packages, insert automatically debian properties (distribution, component, architecture).",
+    }
+    flags[5] = cli.StringFlag{
         Name:  "recursive",
         Value:  "",
         Usage: "[Default: true] Set to false if you do not wish to collect artifacts in sub-folders to be uploaded to Artifactory.",
     }
-    flags[5] = cli.StringFlag{
+    flags[6] = cli.StringFlag{
         Name:  "flat",
         Value:  "",
         Usage: "[Default: true] If not set to true, and the upload path ends with a slash, files are uploaded according to their file system hierarchy.",
     }
-    flags[6] = cli.BoolFlag{
+    flags[7] = cli.BoolFlag{
          Name:  "regexp",
          Usage: "[Default: false] Set to true to use a regular expression instead of wildcards expression to collect files to upload.",
     }
-    flags[7] = cli.StringFlag{
+    flags[8] = cli.StringFlag{
          Name:  "threads",
          Value:  "",
          Usage: "[Default: 3] Number of artifacts to upload in parallel.",
     }
-    flags[8] = cli.BoolFlag{
+    flags[9] = cli.BoolFlag{
          Name:  "dry-run",
          Usage: "[Default: false] Set to true to disable communication with Artifactory.",
     }
@@ -173,7 +177,7 @@ func initFlags(c *cli.Context, cmd string) {
     } else {
         flags.EncPassword = c.Bool("enc-password")
     }
-
+    
     if cmd == "config" {
         flags.ArtDetails = getArtifactoryDetails(c, false)
         if !flags.Interactive && flags.ArtDetails.Url == "" {
@@ -200,7 +204,10 @@ func initFlags(c *cli.Context, cmd string) {
              flags.Flat, _ = strconv.ParseBool(strFlat)
          }
     }
-
+    
+    if c.String("deb") != "" {
+        flags.DebianUploadPath = c.String("deb")
+    }
     flags.Props = c.String("props")
     flags.DryRun = c.Bool("dry-run")
     flags.UseRegExp = c.Bool("regexp")
