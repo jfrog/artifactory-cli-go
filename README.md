@@ -107,6 +107,7 @@ Used to download artifacts from Artifactory.
    --user         [Optional] Artifactory user
    --password     [Optional] Artifactory password
    --props        [Optional] List of properties in the form of key1=value1;key2=value2,... Only artifacts with these properties will be downloaded.
+   --deb          [Optional] Used for Debian packages in the form of distribution/component/architecture.
    --flat         [Default: false] Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded artifacts
    --recursive    [Default: true] Set to false if you do not wish to include the download of artifacts inside sub-directories in Artifactory.
    --min-split    [Default: 5120] Minimum file size in KB to split into ranges. Set to -1 for no splits.
@@ -142,6 +143,7 @@ The configuration is saved at ~/.jfrog/art-cli.conf
 ###### Command options
 ```console
    --interactive  [Default: true] Set to false if you do not wish the config command to be interactive. If true, the --url option becomes optional.
+   --enc-password [Default: true] If set to false then the configured password will not be encrypted using Artifatory's encryption API.
    --url          [Optional] Artifactory URL.
    --user         [Optional] Artifactory user.
    --password     [Optional] Artifactory password.

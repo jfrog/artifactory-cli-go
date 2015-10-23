@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/JFrogDev/artifactory-cli-go/Godeps/_workspace/src/github.com/codegangsta/cli"
-	"github.com/JFrogDev/artifactory-cli-go/commands"
-	"github.com/JFrogDev/artifactory-cli-go/utils"
 	"os"
+	"strings"
 	"strconv"
+	"github.com/JFrogDev/artifactory-cli-go/utils"
+	"github.com/JFrogDev/artifactory-cli-go/commands"
+	"github.com/JFrogDev/artifactory-cli-go/Godeps/_workspace/src/github.com/codegangsta/cli"
 )
 
 var flags = new(utils.Flags)
@@ -16,7 +17,7 @@ func main() {
     app := cli.NewApp()
     app.Name = "art"
     app.Usage = "See https://github.com/JFrogDev/artifactory-cli-go for usage instructions."
-    app.Version = "1.0.1"
+    app.Version = "1.1.0"
 
     app.Commands = []cli.Command{
         {
@@ -154,7 +155,7 @@ func getConfigFlags() []cli.Flag {
     }
     flags[1] = cli.StringFlag{
         Name: "enc-password",
-        Usage: "[Default: true] If set to false then the configured password will not be encrypted using Artifatory encryption API.",
+        Usage: "[Default: true] If set to false then the configured password will not be encrypted using Artifatory's encryption API.",
     }
     copy(flags[2:5], getFlags())
     return flags
@@ -205,6 +206,9 @@ func initFlags(c *cli.Context, cmd string) {
     }
     
     flags.Deb = c.String("deb")
+    if flags.Deb != "" && len(strings.Split(flags.Deb, "/")) != 3 {
+        utils.Exit("The --deb option should be in the form of distribution/component/architecture")
+    }
     flags.Props = c.String("props")
     flags.DryRun = c.Bool("dry-run")
     flags.UseRegExp = c.Bool("regexp")

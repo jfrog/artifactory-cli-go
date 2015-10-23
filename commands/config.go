@@ -7,12 +7,11 @@ import (
     "syscall"
     "io/ioutil"
     "encoding/json"
-    "golang.org/x/crypto/ssh/terminal"
     "github.com/JFrogDev/artifactory-cli-go/utils"
+    "github.com/JFrogDev/artifactory-cli-go/Godeps/_workspace/src/golang.org/x/crypto/ssh/terminal"
 )
 
 func Config(details *utils.ArtifactoryDetails, interactive, shouldEncPassword bool) {
-    password := details.Password
     var bytePassword []byte
     if interactive {
         if details.Url == "" {
@@ -27,13 +26,15 @@ func Config(details *utils.ArtifactoryDetails, interactive, shouldEncPassword bo
             print("Password: ")
             var err error
             bytePassword, err = terminal.ReadPassword(int(syscall.Stdin))
-            password = string(bytePassword)
+            details.Password = string(bytePassword)
             utils.CheckError(err)
         }
     }
     details.Url = utils.AddTrailingSlashIfNeeded(details.Url)
-    updatedArtifactoryDetails := handlePasswordEncryption(details, password, shouldEncPassword)
-    writeConfFile(updatedArtifactoryDetails)
+    if shouldEncPassword {
+        details = encryptPassword(details)
+    }
+    writeConfFile(details)
 }
 
 func ShowConfig() {
@@ -57,30 +58,21 @@ func GetConfig() *utils.ArtifactoryDetails {
     return readConfFile()
 }
 
-func handlePasswordEncryption(details *utils.ArtifactoryDetails, password string, shouldEncPassword bool) *utils.ArtifactoryDetails {
-    var passwordToSave string
-    if shouldEncPassword {
-        response, encPassword := utils.GetEncryptedPasswordFromArtifactory( &utils.ArtifactoryDetails { details.Url, details.User, password })
-        switch response.StatusCode {
-            // In case Artifactory does not allow encrypted password we should query the user for the not encrypted password
-            // with a warning that says that the un-encrypted password will be saved to a file
-            case 409:
-                utils.Exit("\nYour Artifactory server is not configured to encrypt passwords\n" +
-                        "You may use \"art config --enc-password=false\"")
-            case 200:
-                passwordToSave = encPassword
-            default:
-                utils.Exit("\nArtifactory response: " + response.Status)
-        }
-    } else {
-        // In case we do not want to encrypt password we would save the user input
-        passwordToSave = password
+func encryptPassword(details *utils.ArtifactoryDetails) *utils.ArtifactoryDetails {
+    if details.Password == "" {
+        return details
     }
-    return &utils.ArtifactoryDetails { details.Url, details.User, passwordToSave }
-}
-
-func allowUnencryptedPassword(allow string) bool{
-    return allow == "yes" || allow == "y" || allow == "true"
+    response, encPassword := utils.GetEncryptedPasswordFromArtifactory(details)
+    switch response.StatusCode {
+        case 409:
+            utils.Exit("\nYour Artifactory server is not configured to encrypt passwords.\n" +
+                "You may use \"art config --enc-password=false\"")
+        case 200:
+            details.Password = encPassword
+        default:
+            utils.Exit("\nArtifactory response: " + response.Status)
+    }
+    return details
 }
 
 func getConFilePath() string {
