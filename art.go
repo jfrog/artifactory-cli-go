@@ -304,6 +304,6 @@ func getArtifactoryDetails(c *cli.Context, includeConfig bool) *utils.Artifactor
             }
         }
     }
-    utils.AddTrailingSlashIfNeeded(details.Url)
+    details.Url = utils.AddTrailingSlashIfNeeded(details.Url)
     return details
 }
