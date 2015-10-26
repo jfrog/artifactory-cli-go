@@ -5,8 +5,8 @@
         "subject": "jfrog"
     },
     "version": {
-        "name": "1.0.1",
-        "vcs_tag": "1.0.1",
+        "name": "1.1.0",
+        "vcs_tag": "1.1.0",
         "gpgSign": true
     },
     "files":
