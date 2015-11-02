@@ -61,7 +61,7 @@ Used to upload artifacts to Artifactory.
    --url          [Mandatory] Artifactory URL.
    --user         [Optional] Artifactory user.
    --password     [Optional] Artifactory password.
-   --props        [Optional] List of properties in the form of key1=value1;key2=value2,... to be attached to the uploaded artifacts.
+   --props        [Optional] List of properties in the form of "key1=value1;key2=value2,..." to be attached to the uploaded artifacts.
    --deb          [Optional] Used for Debian packages in the form of distribution/component/architecture.
    --flat         [Default: true] If not set to true, and the upload path ends with a slash, artifacts are uploaded according to their file system hierarchy.
    --recursive    [Default: true] Set to false if you do not wish to collect artifacts in sub-folders to be uploaded to Artifactory.
@@ -107,7 +107,7 @@ Used to download artifacts from Artifactory.
    --url          [Mandatory] Artifactory URL
    --user         [Optional] Artifactory user
    --password     [Optional] Artifactory password
-   --props        [Optional] List of properties in the form of key1=value1;key2=value2,... Only artifacts with these properties will be downloaded.
+   --props        [Optional] List of properties in the form of "key1=value1;key2=value2,..." Only artifacts with these properties will be downloaded.
    --flat         [Default: false] Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded artifacts
    --recursive    [Default: true] Set to false if you do not wish to include the download of artifacts inside sub-directories in Artifactory.
    --min-split    [Default: 5120] Minimum file size in KB to split into ranges. Set to -1 for no splits.

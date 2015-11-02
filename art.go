@@ -76,7 +76,7 @@ func getUploadFlags() []cli.Flag {
     copy(flags[0:3], getFlags())    
     flags[3] = cli.StringFlag{
          Name:  "props",
-         Usage: "[Optional] List of properties in the form of key1=value1;key2=value2,... to be attached to the uploaded artifacts.",
+         Usage: "[Optional] List of properties in the form of \"key1=value1;key2=value2,...\" to be attached to the uploaded artifacts.",
     }
     flags[4] = cli.StringFlag{
          Name:  "deb",
@@ -115,7 +115,7 @@ func getDownloadFlags() []cli.Flag {
     copy(flags[0:3], getFlags())
     flags[3] = cli.StringFlag{
          Name:  "props",
-         Usage: "[Optional] List of properties in the form of key1=value1;key2=value2,... Only artifacts with these properties will be downloaded.",
+         Usage: "[Optional] List of properties in the form of \"key1=value1;key2=value2,...\" Only artifacts with these properties will be downloaded.",
     }
     flags[4] = cli.StringFlag{
         Name:  "recursive",
