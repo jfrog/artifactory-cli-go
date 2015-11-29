@@ -16,6 +16,10 @@ type ExitCode struct {
     Code int
 }
 
+func GetVersion() string {
+    return "1.2.0"
+}
+
 func CheckError(err error) {
     if err != nil {
         panic(err)

@@ -77,6 +77,7 @@ func UploadFile(f *os.File, url, user, password string, details *FileDetails) *h
     }
 
     size := strconv.FormatInt(details.Size, 10)
+    addUserAgentHeader(req)
     req.Header.Set("Content-Length", size)
     req.Header.Set("X-Checksum-Sha1", details.Sha1)
     req.Header.Set("X-Checksum-Md5", details.Md5)
@@ -133,6 +134,7 @@ func Send(method string, url string, content []byte, headers map[string]string, 
     if user != "" && password != "" {
 	    req.SetBasicAuth(user, password)
     }
+    addUserAgentHeader(req)
     if headers != nil {
         for name := range headers {
             req.Header.Set(name, headers[name])
@@ -218,4 +220,8 @@ func AppendFile(srcPath string, destFile *os.File) {
     }
     err = writer.Flush()
     CheckError(err)
+}
+
+func addUserAgentHeader(req *http.Request) {
+    req.Header.Set("User-Agent", "artifactory-cli-go/" + GetVersion())
 }
