@@ -9,13 +9,17 @@ import (
 
 func TestSingleFileUpload(t *testing.T) {
     flags := tests.GetFlags()
-    uploadCount1 := Upload("testdata/a.txt", "repo-local", flags)
-    uploadCount2 := Upload("testdata/aa.txt", "repo-local", flags)
-    if uploadCount1 != 1 {
-        t.Error("Expected 1 file to be uploaded. Got " + strconv.Itoa(uploadCount1) + ".")
+    uploaded1, _ := Upload("testdata/a.txt", "repo-local", flags)
+    uploaded2, _ := Upload("testdata/aa.txt", "repo-local", flags)
+    uploaded3, _ := Upload("testdata/aa1*.txt", "repo-local", flags)
+    if uploaded1 != 1 {
+        t.Error("Expected 1 file to be uploaded. Got " + strconv.Itoa(uploaded1) + ".")
     }
-    if uploadCount2 != 1 {
-        t.Error("Expected 1 file to be uploaded. Got " + strconv.Itoa(uploadCount2) + ".")
+    if uploaded2 != 1 {
+        t.Error("Expected 1 file to be uploaded. Got " + strconv.Itoa(uploaded2) + ".")
+    }
+    if uploaded3 != 0 {
+        t.Error("Expected 0 file to be uploaded. Got " + strconv.Itoa(uploaded3) + ".")
     }
 }
 
@@ -33,17 +37,17 @@ func TestPatternNonRecursiveUpload(t *testing.T) {
 
 func testPatternUpload(t *testing.T, flags *utils.Flags) {
     sep := tests.GetFileSeperator()
-    uploadCount1 := Upload("testdata" + sep + "*", "repo-local", flags)
-    uploadCount2 := Upload("testdata" + sep + "a*", "repo-local", flags)
-    uploadCount3 := Upload("testdata" + sep + "b*", "repo-local", flags)
+    uploaded1, _ := Upload("testdata" + sep + "*", "repo-local", flags)
+    uploaded2, _ := Upload("testdata" + sep + "a*", "repo-local", flags)
+    uploaded3, _ := Upload("testdata" + sep + "b*", "repo-local", flags)
 
-    if uploadCount1 != 3 {
-        t.Error("Expected 3 file to be uploaded. Got " + strconv.Itoa(uploadCount1) + ".")
+    if uploaded1 != 3 {
+        t.Error("Expected 3 file to be uploaded. Got " + strconv.Itoa(uploaded1) + ".")
     }
-    if uploadCount2 != 2 {
-        t.Error("Expected 2 file to be uploaded. Got " + strconv.Itoa(uploadCount2) + ".")
+    if uploaded2 != 2 {
+        t.Error("Expected 2 file to be uploaded. Got " + strconv.Itoa(uploaded2) + ".")
     }
-    if uploadCount3 != 1 {
-        t.Error("Expected 1 file to be uploaded. Got " + strconv.Itoa(uploadCount3) + ".")
+    if uploaded3 != 1 {
+        t.Error("Expected 1 file to be uploaded. Got " + strconv.Itoa(uploaded3) + ".")
     }
 }

@@ -3,8 +3,9 @@ package utils
 import (
     "os"
     "io"
-    "strconv"
+    "fmt"
     "sync"
+    "strconv"
     "net/http"
     "crypto/md5"
     "crypto/sha1"
@@ -90,7 +91,7 @@ func DownloadFileConcurrently(downloadPath, localPath, fileName, logMsgPrefix st
             headers["Range"] = "bytes=" + strconv.FormatInt(start, 10) +"-" + strconv.FormatInt(end-1, 10)
             resp, body := SendGet(downloadPath, headers, flags.ArtDetails.User, flags.ArtDetails.Password)
 
-            println(logMsgPrefix + " [" + strconv.Itoa(i) + "]:", resp.Status + "...")
+            fmt.Println(logMsgPrefix + " [" + strconv.Itoa(i) + "]:", resp.Status + "...")
 
             os.MkdirAll(tempLoclPath ,0777)
             filePath := tempLoclPath + "/" + fileName + "_" + strconv.Itoa(i)
@@ -123,7 +124,7 @@ func DownloadFileConcurrently(downloadPath, localPath, fileName, logMsgPrefix st
         tempFilePath := GetTempDirPath() + "/" + fileName + "_" + strconv.Itoa(i)
         AppendFile(tempFilePath, destFile)
     }
-    println(logMsgPrefix + " Done downloading.")
+    fmt.Println(logMsgPrefix + " Done downloading.")
 }
 
 type FileDetails struct {

@@ -17,7 +17,7 @@ func main() {
     app := cli.NewApp()
     app.Name = "art"
     app.Usage = "See https://github.com/JFrogDev/artifactory-cli-go for usage instructions."
-    app.Version = "1.1.0"
+    app.Version = "1.2.0"
 
     app.Commands = []cli.Command{
         {
@@ -181,12 +181,12 @@ func initFlags(c *cli.Context, cmd string) {
     if cmd == "config" {
         flags.ArtDetails = getArtifactoryDetails(c, false)
         if !flags.Interactive && flags.ArtDetails.Url == "" {
-            utils.Exit("The --url option is mandatory when the --interactive option is set to false")
+            utils.Exit(utils.ExitCodeError, "The --url option is mandatory when the --interactive option is set to false")
         }
     } else {
         flags.ArtDetails = getArtifactoryDetails(c, true)
         if flags.ArtDetails.Url == "" {
-            utils.Exit("The --url option is mandatory")
+            utils.Exit(utils.ExitCodeError, "The --url option is mandatory")
         }
     }
 
@@ -207,7 +207,7 @@ func initFlags(c *cli.Context, cmd string) {
     
     flags.Deb = c.String("deb")
     if flags.Deb != "" && len(strings.Split(flags.Deb, "/")) != 3 {
-        utils.Exit("The --deb option should be in the form of distribution/component/architecture")
+        utils.Exit(utils.ExitCodeError, "The --deb option should be in the form of distribution/component/architecture")
     }
     flags.Props = c.String("props")
     flags.DryRun = c.Bool("dry-run")
@@ -218,7 +218,7 @@ func initFlags(c *cli.Context, cmd string) {
     } else {
         flags.Threads, err = strconv.Atoi(c.String("threads"))
         if err != nil || flags.Threads < 1 {
-            utils.Exit("The '--threads' option should have a numeric positive value.")
+            utils.Exit(utils.ExitCodeError, "The '--threads' option should have a numeric positive value.")
         }
     }
     if c.String("min-split") == "" {
@@ -226,7 +226,7 @@ func initFlags(c *cli.Context, cmd string) {
     } else {
         flags.MinSplitSize, err = strconv.ParseInt(c.String("min-split"), 10, 64)
         if err != nil {
-            utils.Exit("The '--min-split' option should have a numeric value. Try 'art download --help'.")
+            utils.Exit(utils.ExitCodeError, "The '--min-split' option should have a numeric value. Try 'art download --help'.")
         }
     }
     if c.String("split-count") == "" {
@@ -234,20 +234,20 @@ func initFlags(c *cli.Context, cmd string) {
     } else {
         flags.SplitCount, err = strconv.Atoi(c.String("split-count"))
         if err != nil {
-            utils.Exit("The '--split-count' option should have a numeric value. Try 'art download --help'.")
+            utils.Exit(utils.ExitCodeError, "The '--split-count' option should have a numeric value. Try 'art download --help'.")
         }
         if flags.SplitCount > 15 {
-            utils.Exit("The '--split-count' option value is limitted to a maximum of 15.")
+            utils.Exit(utils.ExitCodeError, "The '--split-count' option value is limitted to a maximum of 15.")
         }
         if flags.SplitCount < 0 {
-            utils.Exit("The '--split-count' option cannot have a negative value.")
+            utils.Exit(utils.ExitCodeError, "The '--split-count' option cannot have a negative value.")
         }
     }
 }
 
 func config(c *cli.Context) {
     if len(c.Args()) > 1 {
-        utils.Exit("Wrong number of arguments. Try 'art config --help'.")
+        utils.Exit(utils.ExitCodeError, "Wrong number of arguments. Try 'art config --help'.")
     } else
     if len(c.Args()) == 1 {
         if c.Args()[0] == "show" {
@@ -256,7 +256,7 @@ func config(c *cli.Context) {
         if c.Args()[0] == "clear" {
             commands.ClearConfig()
         } else {
-            utils.Exit("Unknown argument '" + c.Args()[0] + "'. Available arguments are 'show' and 'clear'.")
+            utils.Exit(utils.ExitCodeError, "Unknown argument '" + c.Args()[0] + "'. Available arguments are 'show' and 'clear'.")
         }
     } else {
         initFlags(c, "config")
@@ -267,7 +267,7 @@ func config(c *cli.Context) {
 func download(c *cli.Context) {
     initFlags(c, "download")
     if len(c.Args()) != 1 {
-        utils.Exit("Wrong number of arguments. Try 'art download --help'.")
+        utils.Exit(utils.ExitCodeError, "Wrong number of arguments. Try 'art download --help'.")
     }
     pattern := c.Args()[0]
     commands.Download(pattern, flags)
@@ -277,11 +277,17 @@ func upload(c *cli.Context) {
     initFlags(c, "upload")
     size := len(c.Args())
     if size != 2 {
-        utils.Exit("Wrong number of arguments. Try 'art upload --help'.")
+        utils.Exit(utils.ExitCodeError, "Wrong number of arguments. Try 'art upload --help'.")
     }
     localPath := c.Args()[0]
     targetPath := c.Args()[1]
-    commands.Upload(localPath, targetPath, flags)
+    uploaded , failed := commands.Upload(localPath, targetPath, flags)
+    if failed > 0 {
+        if uploaded > 0 {
+            utils.Exit(utils.ExitCodeWarning, "")
+        }
+        utils.Exit(utils.ExitCodeError, "")
+    }
 }
 
 func getArtifactoryDetails(c *cli.Context, includeConfig bool) *utils.ArtifactoryDetails {

@@ -40,13 +40,13 @@ func Config(details *utils.ArtifactoryDetails, interactive, shouldEncPassword bo
 func ShowConfig() {
     details := readConfFile()
     if details.Url != "" {
-        println("Url: " + details.Url)
+        fmt.Println("Url: " + details.Url)
     }
     if details.User != "" {
-        println("User: " + details.User)
+        fmt.Println("User: " + details.User)
     }
     if details.Password != "" {
-        println("Password: " + details.Password)
+        fmt.Println("Password: " + details.Password)
     }
 }
 
@@ -65,12 +65,12 @@ func encryptPassword(details *utils.ArtifactoryDetails) *utils.ArtifactoryDetail
     response, encPassword := utils.GetEncryptedPasswordFromArtifactory(details)
     switch response.StatusCode {
         case 409:
-            utils.Exit("\nYour Artifactory server is not configured to encrypt passwords.\n" +
+            utils.Exit(utils.ExitCodeError, "\nYour Artifactory server is not configured to encrypt passwords.\n" +
                 "You may use \"art config --enc-password=false\"")
         case 200:
             details.Password = encPassword
         default:
-            utils.Exit("\nArtifactory response: " + response.Status)
+            utils.Exit(utils.ExitCodeError, "\nArtifactory response: " + response.Status)
     }
     return details
 }
@@ -78,7 +78,7 @@ func encryptPassword(details *utils.ArtifactoryDetails) *utils.ArtifactoryDetail
 func getConFilePath() string {
     userDir := utils.GetHomeDir()
     if userDir == "" {
-        utils.Exit("Couldn't find home directory. Make sure your HOME environment variable is set.")
+        utils.Exit(utils.ExitCodeError, "Couldn't find home directory. Make sure your HOME environment variable is set.")
     }
     confPath := userDir + "/.jfrog/"
     os.MkdirAll(confPath ,0777)

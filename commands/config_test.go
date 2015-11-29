@@ -1,6 +1,7 @@
 package commands
 
 import (
+    "fmt"
     "testing"
     "reflect"
     "encoding/json"
@@ -8,7 +9,7 @@ import (
 )
 
 func TestConfig(t *testing.T){
-    inputDetails := utils.ArtifactoryDetails { "http://localhost:8081/artifactory", "username", "password" }
+    inputDetails := utils.ArtifactoryDetails { "http://localhost:8080/artifactory", "admin", "password" }
     Config(&inputDetails, false, false)
     outputConfig := GetConfig()
     printConfigStruct(&inputDetails)
@@ -25,5 +26,5 @@ func configStructToString(artConfig *utils.ArtifactoryDetails) string {
 
 func printConfigStruct(artConfig *utils.ArtifactoryDetails){
     stringSturct := configStructToString(artConfig)
-    println(stringSturct)
+    fmt.Println(stringSturct)
 }

@@ -65,7 +65,7 @@ func buildPropsQuery(props string) string {
     for _, prop := range propList {
         keyVal := strings.Split(prop, "=")
         if len(keyVal) != 2 {
-            Exit("Invalid props pattern: " + props)
+            Exit(ExitCodeError, "Invalid props pattern: " + props)
         }
         key := keyVal[0]
         value := keyVal[1]

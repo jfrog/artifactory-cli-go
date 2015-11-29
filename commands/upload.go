@@ -2,6 +2,7 @@ package commands
 
 import (
   "os"
+  "fmt"
   "sync"
   "strings"
   "regexp"
@@ -12,7 +13,7 @@ import (
 
 // Uploads the artifacts in the specified local path pattern to the specified target path.
 // Returns the total number of artifacts successfully uploaded.
-func Upload(localPath, targetPath string, flags *utils.Flags) int {
+func Upload(localPath, targetPath string, flags *utils.Flags) (totalUploaded, totalFailed int) {
     // Get the list of artifacts to be uploaded to Artifactory:
     artifacts := getFilesToUpload(localPath, targetPath, flags)
     size := len(artifacts)
@@ -37,16 +38,17 @@ func Upload(localPath, targetPath string, flags *utils.Flags) int {
         }(i)
     }
     wg.Wait()
-    totalSuccessful := 0
+    totalUploaded = 0
     for _, i := range uploadCount {
-        totalSuccessful += i
+        totalUploaded += i
     }
 
-    println("Uploaded " + strconv.Itoa(totalSuccessful) + " artifacts to Artifactory.")
-    if size-totalSuccessful > 0 {
-        println("Failed uploading " + strconv.Itoa(size-totalSuccessful) + " artifacts to Artifactory.")
+    fmt.Println("Uploaded " + strconv.Itoa(totalUploaded) + " artifacts to Artifactory.")
+    totalFailed = size-totalUploaded
+    if totalFailed > 0 {
+        fmt.Println("Failed uploading " + strconv.Itoa(totalFailed) + " artifacts to Artifactory.")
     }
-    return totalSuccessful
+    return
 }
 
 func prepareUploadPath(path string) string {
@@ -97,7 +99,7 @@ func getFilesToUpload(localpath string, targetPath string, flags *utils.Flags) [
     }
     rootPath := getRootPath(localpath, flags.UseRegExp)
     if !utils.IsPathExists(rootPath) {
-        utils.Exit("Path does not exist: " + rootPath)
+        utils.Exit(utils.ExitCodeError, "Path does not exist: " + rootPath)
     }
     localpath = prepareLocalPath(localpath, flags.UseRegExp)
 
@@ -206,7 +208,7 @@ func uploadFile(localPath string, targetPath string, flags *utils.Flags, logMsgP
         targetPath += getDebianProps(flags.Deb)
     }
 
-    println(logMsgPrefix + " Uploading artifact: " + targetPath)
+    fmt.Println(logMsgPrefix + " Uploading artifact: " + targetPath)
     file, err := os.Open(localPath)
     utils.CheckError(err)
     defer file.Close()
@@ -230,7 +232,7 @@ func uploadFile(localPath string, targetPath string, flags *utils.Flags, logMsgP
         } else {
             strChecksumDeployed = ""
         }
-        println(logMsgPrefix + " Artifactory response: " + resp.Status + strChecksumDeployed)
+        fmt.Println(logMsgPrefix + " Artifactory response: " + resp.Status + strChecksumDeployed)
     }
 
     return flags.DryRun || checksumDeployed || resp.StatusCode == 201 || resp.StatusCode == 200

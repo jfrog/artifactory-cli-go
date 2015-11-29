@@ -1,6 +1,7 @@
 package commands
 
 import (
+  "fmt"
   "sync"
   "strconv"
   "encoding/json"
@@ -12,16 +13,16 @@ import (
 func Download(downloadPattern string, flags *utils.Flags) string {
     aqlUrl := flags.ArtDetails.Url + "api/search/aql"
     data := utils.BuildAqlSearchQuery(downloadPattern, flags.Recursive, flags.Props)
-    println("Searching Artifactory using AQL query: " + data)
+    fmt.Println("Searching Artifactory using AQL query: " + data)
 
     if !flags.DryRun {
         resp, json := utils.SendPost(aqlUrl, []byte(data), flags.ArtDetails.User, flags.ArtDetails.Password)
-        println("Artifactory response:", resp.Status)
+        fmt.Println("Artifactory response:", resp.Status)
 
         if resp.StatusCode == 200 {
             resultItems := parseAqlSearchResponse(json)
             downloadFiles(resultItems, flags)
-            println("Downloaded " + strconv.Itoa(len(resultItems)) + " artifacts from Artifactory.")
+            fmt.Println("Downloaded " + strconv.Itoa(len(resultItems)) + " artifacts from Artifactory.")
         }
     }
     return data
@@ -36,7 +37,7 @@ func downloadFiles(resultItems []AqlSearchResultItem, flags *utils.Flags) {
             for j := threadId; j < size; j += flags.Threads {
                 downloadPath := buildDownloadUrl(flags.ArtDetails.Url, resultItems[j])
                 logMsgPrefix := utils.GetLogMsgPrefix(threadId, flags.DryRun)
-                println(logMsgPrefix + " Downloading " + downloadPath)
+                fmt.Println(logMsgPrefix + " Downloading " + downloadPath)
                 if !flags.DryRun {
                     downloadFile(downloadPath, resultItems[j].Path, resultItems[j].Name, logMsgPrefix, flags)
                 }
@@ -53,13 +54,13 @@ func downloadFile(downloadPath, localPath, localFileName, logMsgPrefix string, f
     if shouldDownloadFile(localFilePath, details, flags.ArtDetails.User, flags.ArtDetails.Password) {
         if flags.SplitCount == 0 || flags.MinSplitSize < 0 || flags.MinSplitSize*1000 > details.Size || !details.AcceptRanges {
             resp := utils.DownloadFile(downloadPath, localPath, localFileName, flags.Flat, flags.ArtDetails.User, flags.ArtDetails.Password)
-            println(logMsgPrefix + " Artifactory response:", resp.Status)
+            fmt.Println(logMsgPrefix + " Artifactory response:", resp.Status)
         } else {
             utils.DownloadFileConcurrently(
                 downloadPath, localPath, localFileName, logMsgPrefix, details.Size, flags)
         }
     } else {
-        println(logMsgPrefix + " File already exists locally.")
+        fmt.Println(logMsgPrefix + " File already exists locally.")
     }
 }
 

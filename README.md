@@ -34,7 +34,7 @@ Navigate to the following directory
 $ cd $GOPATH/bin
 ```
 
-Rename the executable file located in the current directory to art (or art.exe on Windows):
+You'll find the art (or art.exe on Windows) executable there.
 
 #### Usage
 
