@@ -10,6 +10,6 @@
         "gpgSign": true
     },
     "files":
-        [{"includePattern": "/home/travis/gopath/bin/linux_386/art", "uploadPattern": "1.1.0/artifactory-cli-linux-386/art"}],
+        [{"includePattern": "/home/travis/gopath/bin/linux_386/art", "uploadPattern": "1.2.0/artifactory-cli-linux-386/art"}],
     "publish": true
 }
