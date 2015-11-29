@@ -28,5 +28,3 @@ deploy:
   key: "$API_KEY"
   passphrase: "$PASSPHRASE"
   user: jfrogdev
-  on:
-    tags: true
