@@ -11,5 +11,5 @@
     },
     "files":
         [{"includePattern": "/home/travis/gopath/bin/art", "uploadPattern": "1.2.0/artifactory-cli-linux-amd64/art"}],
-    "publish": true
+    "publish": false
 }

@@ -11,5 +11,5 @@
     },
     "files":
         [{"includePattern": "/home/travis/gopath/bin/windows_amd64/art.exe", "uploadPattern": "1.2.0/windows_amd64/art.exe"}],
-    "publish": true
+    "publish": false
 }

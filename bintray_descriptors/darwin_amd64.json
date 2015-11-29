@@ -11,5 +11,5 @@
     },
     "files":
         [{"includePattern": "/home/travis/gopath/bin/darwin_amd64/art", "uploadPattern": "1.2.0/artifactory-cli-mac-386/art"}],
-    "publish": true
+    "publish": false
 }
