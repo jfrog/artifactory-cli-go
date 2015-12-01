@@ -2,7 +2,7 @@
 echo a
 ls
 
-# cd /home/travis/gopath/bin
+cd /home/travis/gopath/bin
 echo b
 ls
 
