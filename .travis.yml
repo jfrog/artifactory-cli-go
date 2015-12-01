@@ -24,8 +24,8 @@ script:
   - go build -v ./...
 
 before_deploy:
-  - echo ${OS}
-  - echo ${ARCH} 
+  - echo $OS
+  - echo $ARCH
 
 deploy:
   skip_cleanup: true
