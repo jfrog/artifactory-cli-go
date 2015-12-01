@@ -1,8 +1,5 @@
 language: go
 
-go:
-  - 1.5.1
-
 env:
     matrix:
        - GIMME_OS=windows GIMME_ARCH=amd64
