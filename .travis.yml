@@ -24,7 +24,7 @@ before_deploy:
 
 deploy:
   skip_cleanup: true
-  file: bintray_descriptors/${GOOS}_${GOARCH}.json
+  file: bintray_descriptors/$GOOS_$GOARCH.json
   provider: bintray
   key: "$API_KEY"
   passphrase: "$PASSPHRASE"
