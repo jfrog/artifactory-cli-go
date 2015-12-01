@@ -21,11 +21,11 @@ script:
   - go build -v ./...
 
 before_deploy:
-  - go env
-  - export GIMME_OS=${GOOS}
-  - export GIMME_ARCH=${GOARCH}
-  - chmod +x ./prepare_bintray_deployment.sh
-  - "./prepare_bintray_deployment.sh"
+  # - go env
+  # - export GIMME_OS=${GOOS}
+  # - export GIMME_ARCH=${GOARCH}
+  # - chmod +x ./prepare_bintray_deployment.sh
+  # - "./prepare_bintray_deployment.sh"
 
 deploy:
   skip_cleanup: true
