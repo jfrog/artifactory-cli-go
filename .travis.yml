@@ -23,7 +23,7 @@ before_deploy:
   - "./prepare_bintray_deployment.sh"
 
 deploy:
-  file: bintray_descriptors/${GIMME_OS}_${GIMME_ARCH}.json
+  file: bintray_descriptors/${GOOS}_${GOARCH}.json
   provider: bintray
   key: "$API_KEY"
   passphrase: "$PASSPHRASE"
