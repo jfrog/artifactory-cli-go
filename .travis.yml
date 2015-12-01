@@ -16,6 +16,8 @@ before_script:
   - go get -d -v ./...
 
 script:
+  - export GIMME_OS=${GOOS}
+  - export GIMME_ARCH=${GOARCH}
   - go build -v ./...
 
 before_deploy:
