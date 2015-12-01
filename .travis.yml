@@ -23,6 +23,7 @@ before_deploy:
   - "./prepare_bintray_deployment.sh"
 
 deploy:
+  skip_cleanup: true
   file: bintray_descriptors/${GOOS}_${GOARCH}.json
   provider: bintray
   key: "$API_KEY"
