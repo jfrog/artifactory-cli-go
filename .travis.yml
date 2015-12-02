@@ -20,8 +20,8 @@ script:
   - go build -v ./...
 
 before_deploy:
-  - echo ${GOOS}
-  - echo ${GOARCH}
+  - go env GOOS
+  - go env GOARCH
 
 deploy:
   skip_cleanup: true
