@@ -14,13 +14,16 @@ env:
        - secure: agExFpqoamoCHJY/vC66FwGJA2B6HXkW5cdgX2+CraeO4g1SVRJiX3296l/msFYbCfnTn7GuBnkpyhrbZ6NzndHGgXCjD0Q5RG85QF2ylVVr7/rlf/GC1l+IgxR7XmbXBv0DgfzFkrTbKqDJUJ6e5jpj29RKRHKEuX0f+OvycNL4b/tJIM4fyUcPq5SUTfYjAFwxh/00zkNhLjw3o24N3kK/JU8hipFbyGOf0pGAQg6rpZ3oDgHD24AoLRXCLFrjs+V07AXxMRqN+sCxYRxiQs8hYdCRgTVjyCTiAqDiV5Xu6lUtLzbVHWORnOP9+8GDnrI85Gv1lPpfn6nQNF+fxmcYBWq/RhebR7Mgc8v94yWQacBOuyxpgNY/FPO2XXXTL5y3PRxndsPoe8L7k3b9b2kx4H4/elkIRM/KMk1DdM7E1x4q3EhQUTKA7E6ZzWficuYL8OLHbLcKeASK+WDoJgWbXTzbVx4GgiKpp2gFQ19Kfs84t0lCU44OVg1OmksOS7llff47lgMJL5NPlIV77Dddmlud+9aPi0O4NUq8B8o2mpt8C13re0z8HNL5ce2fmHGi/XXnMMdSkTv6oC/jwqx4fo+6AxvVSxb6Dqh0U3gqmnlZngbz5UZCugp3GCSbNfvcMoyzWWx2AQTW6Y/Kpx+PWDLULV/19BTGez6L7m4=
 
 
-install:
+before_install:
   - curl -o gimme -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme
   - chmod u+x gimme
   - unset GOROOT GOTOOLDIR
   - eval "$(./gimme 1.5)"
   - go version
   - go env
+
+install:
+  - "go get -d -v ./..."
 
 before_script:
   # - curl -sL -o ~/bin/gimme https://raw.githubusercontent.com/travis-ci/gimme/master/gimme
