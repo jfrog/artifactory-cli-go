@@ -5,9 +5,9 @@ go:
 
 env:
     matrix:
-       - GOOS=windows GOARCH=amd64
-       - GOOS=linux GOARCH=amd64
-       - GOOS=linux GOARCH=386
+       - GIMME_OS=windows GIMME_ARCH=amd64
+       - GIMME_OS=linux GIMME_ARCH=amd64
+       - GIMME_OS=linux GIMME_ARCH=386
        - GIMME_OS=darwin GIMME_ARCH=amd64
     global:
        - secure: c/hl3zSgofRYSgIAgpStLEDx8szp1s1P9Gh3+fKNL9B/134j5B48arOx/bzWquUSKnvfwYddK4mlMDNDJBt0E2nul0nILTO1DTG7MTVExXKapVtdCj/9+P4OWLJTi8rDbC8d3N+t6E/mpczwnFVA3CPraDrEXWFmmRtm62eZLbMAvpESVdWF4xu8+9cDdv507H1re0d+IPFH9PK+B7aokyAjFVzf2719TYV7o9v3NakkLIWlnR18PnB6RX7vHBV7ziGWBOWHhpJIpne8StlBNTPwlbiGb80lNdUT2BLr9o66VuOT11L3K4QromWroDwiWc6MCA0Lvs6r8+I3PHebvXVjVEuzeSwJF9Szhe+UDL2FhFAdjecJ94tmfOG6X/P83Gl3aH3JnRHNgF7SnyO+WCB214w2zWz7EFCRJ9ji2SiqbmUFrbhxkGKF1RkYQP/r7NSq7QR20Esyp9vZurwLD7Qm7WnhkS0MFfBNKAFX/mPdsoajrqNzfUDR6/VYsiCQNreuTOawQamxYQ+IjcvG+3UIiEXPWuifd8idB2lprUwBlwHy0joUDNUwu6+Jb7xcUCbqK9w/ZYShUfpfSUKn5LMquGJpsTSeDXqfBJWQqR5e1QToteFu8UwyRuLUg2qvUwVS81T3NPy0Bg+L2v+TnInOnDWc8oIg2xJM5WaZATU=
