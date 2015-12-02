@@ -2,6 +2,6 @@
 
 cd /home/travis/gopath/bin
 
-if [ "${OS}" = "windows" ] ; then
+if [ "${GIMME_OS}" = "windows" ] ; then
 	mv art art.exe
 fi
