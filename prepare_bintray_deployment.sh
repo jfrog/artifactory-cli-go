@@ -6,7 +6,7 @@ echo a
 ls
 
 
-if [ "${GIMME_OS}" != "linux" || "${GIMME_ARCH}" != "amd64"] ; then
+if [ "${GIMME_OS}" != "linux" ] || ["${GIMME_ARCH}" != "amd64"] ; then
 	cd "${GIMME_OS}_${GIMME_ARC}"
 fi
 
