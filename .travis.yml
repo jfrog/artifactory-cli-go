@@ -29,7 +29,7 @@ before_deploy:
 
 deploy:
   skip_cleanup: true
-  file: bintray_descriptors/$OS_$ARCH.json
+  file: bintray_descriptors/${OS}_${ARCH}.json
   provider: bintray
   key: "$API_KEY"
   passphrase: "$PASSPHRASE"
