@@ -1,10 +1,15 @@
 #!/bin/bash
 
+cd /home/travis/gopath/bin
+
 echo a
 ls
 
 
-cd /home/travis/gopath/bin
+if [ "${GIMME_OS}" != "linux" || "${GIMME_ARCH}" != "amd64"] ; then
+	cd "${GIMME_OS}_${GIMME_ARC}"
+fi
+
 
 echo b
 ls
