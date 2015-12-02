@@ -33,6 +33,10 @@ before_script:
 script:
   - go build -v ./...
 
+before_deploy:
+  - chmod +x ./prepare_bintray_deployment.sh
+  - "./prepare_bintray_deployment.sh"
+
 deploy:
   skip_cleanup: true
   file: bintray_descriptors/${GIMME_OS}_${GIMME_ARCH}.json
