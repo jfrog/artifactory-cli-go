@@ -22,8 +22,8 @@ before_install:
   - go version
   - go env
 
-install:
-  - "go get -d -v ./..."
+# install:
+#   - go get -d -v ./...
 
 before_script:
   # - curl -sL -o ~/bin/gimme https://raw.githubusercontent.com/travis-ci/gimme/master/gimme
@@ -32,10 +32,6 @@ before_script:
 
 script:
   - go build -v ./...
-
-before_deploy:
-  - go env GOOS
-  - go env GOARCH
 
 deploy:
   skip_cleanup: true
