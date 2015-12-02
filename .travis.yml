@@ -22,12 +22,7 @@ before_install:
   - go version
   - go env
 
-# install:
-#   - go get -d -v ./...
-
 before_script:
-  # - curl -sL -o ~/bin/gimme https://raw.githubusercontent.com/travis-ci/gimme/master/gimme
-  # - chmod +x ~/bin/gimme
   - go get -d -v ./...
 
 script:
@@ -44,3 +39,5 @@ deploy:
   key: "$API_KEY"
   passphrase: "$PASSPHRASE"
   user: jfrogdev
+  on:
+    tags: true
