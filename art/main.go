@@ -12,6 +12,7 @@ import (
 var flags = new(utils.Flags)
 
 func main() {
+    utils.CreateTempDirPath()
     defer utils.RemoveTempDir()
 
     app := cli.NewApp()

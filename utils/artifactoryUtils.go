@@ -96,12 +96,7 @@ func DownloadFileConcurrently(downloadPath, localPath, fileName, logMsgPrefix st
             os.MkdirAll(tempLoclPath ,0777)
             filePath := tempLoclPath + "/" + fileName + "_" + strconv.Itoa(i)
 
-            out, err := os.Create(filePath)
-            CheckError(err)
-            defer out.Close()
-
-            out.Write(body)
-            CheckError(err)
+            createFileWithContent(filePath, body)
             wg.Done()
         }(start, end, i)
     }
@@ -125,6 +120,13 @@ func DownloadFileConcurrently(downloadPath, localPath, fileName, logMsgPrefix st
         AppendFile(tempFilePath, destFile)
     }
     fmt.Println(logMsgPrefix + " Done downloading.")
+}
+
+func createFileWithContent(filePath string, content []byte) {
+    out, err := os.Create(filePath)
+    CheckError(err)
+    defer out.Close()
+    out.Write(content)
 }
 
 type FileDetails struct {

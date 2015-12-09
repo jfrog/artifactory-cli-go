@@ -179,11 +179,18 @@ func ListFiles(path string) []string {
 
 func GetTempDirPath() string {
     if tempDirPath == "" {
-        path, err := ioutil.TempDir("", "artifactory.cli.")
-        CheckError(err)
-        tempDirPath = path
+        Exit(ExitCodeError, "Function cannot be used before 'tempDirPath' is created.")
     }
     return tempDirPath
+}
+
+func CreateTempDirPath() {
+    if tempDirPath != "" {
+        Exit(ExitCodeError, "'tempDirPath' has already been initialized.")
+    }
+    path, err := ioutil.TempDir("", "artifactory.cli.")
+    CheckError(err)
+    tempDirPath = path
 }
 
 func RemoveTempDir() {
