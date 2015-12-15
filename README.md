@@ -26,7 +26,7 @@ If you prefer, you may instead build the client in go.
 
 Run the following command to create the *artifactory-cli-go* project:
 ```console
-$ go get github.com/JFrogDev/artifactory-cli-go
+$ go get github.com/JFrogDev/artifactory-cli-go/...
 ```
 
 Navigate to the following directory
