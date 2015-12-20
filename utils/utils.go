@@ -17,7 +17,7 @@ type ExitCode struct {
 }
 
 func GetVersion() string {
-    return "1.2.0"
+    return "1.2.1"
 }
 
 func CheckError(err error) {
