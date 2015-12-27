@@ -51,7 +51,7 @@ func SshAuthentication(details *ArtifactoryDetails) {
     err = json.Unmarshal(buf.Bytes(), &result)
     CheckError(err)
     details.Url = AddTrailingSlashIfNeeded(result.Href)
-    details.SshAuthHeaders = result.Header
+    details.SshAuthHeaders = result.Headers
     fmt.Println("SSH authentication successful.")
 }
 
@@ -86,5 +86,5 @@ func parseUrl(url string) (protocol, host string, port int) {
 
 type SshAuthResult struct {
     Href string
-    Header map[string]string
+    Headers map[string]string
 }
