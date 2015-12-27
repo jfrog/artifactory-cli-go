@@ -11,12 +11,16 @@ import (
 // Downloads the artifacts using the specified download pattern.
 // Returns the AQL query used for the download.
 func Download(downloadPattern string, flags *utils.Flags) string {
+    if flags.ArtDetails.SshKeyPath != "" {
+        utils.SshAuthentication(flags.ArtDetails)
+    }
+
     aqlUrl := flags.ArtDetails.Url + "api/search/aql"
     data := utils.BuildAqlSearchQuery(downloadPattern, flags.Recursive, flags.Props)
     fmt.Println("Searching Artifactory using AQL query: " + data)
 
     if !flags.DryRun {
-        resp, json := utils.SendPost(aqlUrl, []byte(data), flags.ArtDetails.User, flags.ArtDetails.Password)
+        resp, json := utils.SendPost(aqlUrl, []byte(data), *flags.ArtDetails)
         fmt.Println("Artifactory response:", resp.Status)
 
         if resp.StatusCode == 200 {
@@ -49,11 +53,11 @@ func downloadFiles(resultItems []AqlSearchResultItem, flags *utils.Flags) {
 }
 
 func downloadFile(downloadPath, localPath, localFileName, logMsgPrefix string, flags *utils.Flags) {
-    details := utils.GetFileDetailsFromArtifactory(downloadPath, flags.ArtDetails.User, flags.ArtDetails.Password)
+    details := utils.GetFileDetailsFromArtifactory(downloadPath, *flags.ArtDetails)
     localFilePath := localPath + "/" + localFileName
     if shouldDownloadFile(localFilePath, details, flags.ArtDetails.User, flags.ArtDetails.Password) {
         if flags.SplitCount == 0 || flags.MinSplitSize < 0 || flags.MinSplitSize*1000 > details.Size || !details.AcceptRanges {
-            resp := utils.DownloadFile(downloadPath, localPath, localFileName, flags.Flat, flags.ArtDetails.User, flags.ArtDetails.Password)
+            resp := utils.DownloadFile(downloadPath, localPath, localFileName, flags.Flat, *flags.ArtDetails)
             fmt.Println(logMsgPrefix + " Artifactory response:", resp.Status)
         } else {
             utils.DownloadFileConcurrently(

@@ -14,6 +14,10 @@ import (
 // Uploads the artifacts in the specified local path pattern to the specified target path.
 // Returns the total number of artifacts successfully uploaded.
 func Upload(localPath, targetPath string, flags *utils.Flags) (totalUploaded, totalFailed int) {
+    if flags.ArtDetails.SshKeyPath != "" {
+        utils.SshAuthentication(flags.ArtDetails)
+    }
+
     // Get the list of artifacts to be uploaded to Artifactory:
     artifacts := getFilesToUpload(localPath, targetPath, flags)
     size := len(artifacts)
@@ -223,7 +227,7 @@ func uploadFile(localPath string, targetPath string, flags *utils.Flags, logMsgP
         checksumDeployed = !flags.DryRun && (resp.StatusCode == 201 || resp.StatusCode == 200)
     }
     if !flags.DryRun && !checksumDeployed {
-        resp = utils.UploadFile(file, targetPath, flags.ArtDetails.User, flags.ArtDetails.Password, details)
+        resp = utils.UploadFile(file, targetPath, *flags.ArtDetails, details)
     }
     if !flags.DryRun {
         var strChecksumDeployed string
@@ -248,7 +252,7 @@ func tryChecksumDeploy(filePath, targetPath string, flags *utils.Flags) (*http.R
     if flags.DryRun {
         return nil, details
     }
-    resp, _ := utils.SendPut(targetPath, nil, headers, flags.ArtDetails.User, flags.ArtDetails.Password)
+    resp, _ := utils.SendPut(targetPath, nil, headers, *flags.ArtDetails)
     return resp, details
 }
 

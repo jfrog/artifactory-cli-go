@@ -52,8 +52,8 @@ func calcMd5(filePath string) string {
     return hex.EncodeToString(hashMd5.Sum(resMd5))
 }
 
-func GetFileDetailsFromArtifactory(downloadUrl string, user string, password string) *FileDetails {
-    resp, _ := SendHead(downloadUrl, user, password)
+func GetFileDetailsFromArtifactory(downloadUrl string, artifactoryDetails ArtifactoryDetails) *FileDetails {
+    resp, _ := SendHead(downloadUrl, artifactoryDetails)
     fileSize, err := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
     CheckError(err)
 
@@ -68,7 +68,7 @@ func GetFileDetailsFromArtifactory(downloadUrl string, user string, password str
 
 func GetEncryptedPasswordFromArtifactory(artifactoryDetails *ArtifactoryDetails) (*http.Response, string) {
 	apiUrl := artifactoryDetails.Url + "api/security/encryptedPassword"
-	resp, body := SendGet(apiUrl, nil, artifactoryDetails.User, artifactoryDetails.Password)
+	resp, body := SendGet(apiUrl, nil, *artifactoryDetails)
 	return resp, string(body)
 }
 
@@ -89,7 +89,7 @@ func DownloadFileConcurrently(downloadPath, localPath, fileName, logMsgPrefix st
         go func(start, end int64, i int) {
             headers := make(map[string]string)
             headers["Range"] = "bytes=" + strconv.FormatInt(start, 10) +"-" + strconv.FormatInt(end-1, 10)
-            resp, body := SendGet(downloadPath, headers, flags.ArtDetails.User, flags.ArtDetails.Password)
+            resp, body := SendGet(downloadPath, headers, *flags.ArtDetails)
 
             fmt.Println(logMsgPrefix + " [" + strconv.Itoa(i) + "]:", resp.Status + "...")
 

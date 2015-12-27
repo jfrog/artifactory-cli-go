@@ -64,7 +64,7 @@ func ReadFile(filePath string) []byte {
 	return content
 }
 
-func UploadFile(f *os.File, url, user, password string, details *FileDetails) *http.Response {
+func UploadFile(f *os.File, url string, artifactoryDetails ArtifactoryDetails, details *FileDetails) *http.Response {
     if details == nil {
         details = GetFileDetails(f.Name())
     }
@@ -72,12 +72,12 @@ func UploadFile(f *os.File, url, user, password string, details *FileDetails) *h
     CheckError(err)
     req.ContentLength = details.Size
     req.Close = true
-    if user != "" && password != "" {
-	    req.SetBasicAuth(user, password)
-    }
+
+    addAuthHeaders(req, artifactoryDetails)
+    addUserAgentHeader(req)
 
     size := strconv.FormatInt(details.Size, 10)
-    addUserAgentHeader(req)
+
     req.Header.Set("Content-Length", size)
     req.Header.Set("X-Checksum-Sha1", details.Sha1)
     req.Header.Set("X-Checksum-Md5", details.Md5)
@@ -89,7 +89,7 @@ func UploadFile(f *os.File, url, user, password string, details *FileDetails) *h
     return resp
 }
 
-func DownloadFile(downloadPath, localPath, fileName string, flat bool, user, password string) *http.Response {
+func DownloadFile(downloadPath, localPath, fileName string, flat bool, artifactoryDetails ArtifactoryDetails) *http.Response {
     if !flat && localPath != "" {
         os.MkdirAll(localPath ,0777)
         fileName = localPath + "/" + fileName
@@ -98,29 +98,31 @@ func DownloadFile(downloadPath, localPath, fileName string, flat bool, user, pas
     out, err := os.Create(fileName)
     CheckError(err)
     defer out.Close()
-    resp, body := SendGet(downloadPath, nil, user, password)
+    resp, body := SendGet(downloadPath, nil, artifactoryDetails)
     out.Write(body)
     CheckError(err)
     return resp
 }
 
-func SendPut(url string, content []byte, headers map[string]string, user string, password string) (*http.Response, []byte) {
-    return Send("PUT", url, content, headers, user, password)
+func SendPut(url string, content []byte, headers map[string]string, artifactoryDetails ArtifactoryDetails) (*http.Response, []byte) {
+    return Send("PUT", url, content, headers, artifactoryDetails)
 }
 
-func SendPost(url string, content []byte, user string, password string) (*http.Response, []byte) {
-    return Send("POST", url, content, nil, user, password)
+func SendPost(url string, content []byte, artifactoryDetails ArtifactoryDetails) (*http.Response, []byte) {
+    return Send("POST", url, content, nil, artifactoryDetails)
 }
 
-func SendGet(url string, headers map[string]string, user string, password string) (*http.Response, []byte) {
-    return Send("GET", url, nil, headers, user, password)
+func SendGet(url string, headers map[string]string, artifactoryDetails ArtifactoryDetails) (*http.Response, []byte) {
+    return Send("GET", url, nil, headers, artifactoryDetails)
 }
 
-func SendHead(url string, user string, password string) (*http.Response, []byte) {
-    return Send("HEAD", url, nil, nil, user, password)
+func SendHead(url string, artifactoryDetails ArtifactoryDetails) (*http.Response, []byte) {
+    return Send("HEAD", url, nil, nil, artifactoryDetails)
 }
 
-func Send(method string, url string, content []byte, headers map[string]string, user string, password string) (*http.Response, []byte) {
+func Send(method string, url string, content []byte, headers map[string]string,
+    artifactoryDetails ArtifactoryDetails) (*http.Response, []byte) {
+
     var req *http.Request
     var err error
 
@@ -131,15 +133,15 @@ func Send(method string, url string, content []byte, headers map[string]string, 
     }
     CheckError(err)
     req.Close = true
-    if user != "" && password != "" {
-	    req.SetBasicAuth(user, password)
-    }
+
+    addAuthHeaders(req, artifactoryDetails)
     addUserAgentHeader(req)
     if headers != nil {
         for name := range headers {
             req.Header.Set(name, headers[name])
         }
     }
+
     client := &http.Client{}
     resp, err := client.Do(req)
     CheckError(err)
@@ -227,6 +229,17 @@ func AppendFile(srcPath string, destFile *os.File) {
     }
     err = writer.Flush()
     CheckError(err)
+}
+
+func addAuthHeaders(req *http.Request, artifactoryDetails ArtifactoryDetails) {
+    if artifactoryDetails.SshAuthHeaders != nil {
+        for name := range artifactoryDetails.SshAuthHeaders {
+            req.Header.Set(name, artifactoryDetails.SshAuthHeaders[name])
+        }
+    } else
+    if artifactoryDetails.User != "" && artifactoryDetails.Password != "" {
+	    req.SetBasicAuth(artifactoryDetails.User, artifactoryDetails.Password)
+    }
 }
 
 func addUserAgentHeader(req *http.Request) {

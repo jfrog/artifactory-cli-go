@@ -4,6 +4,7 @@ import (
     "os"
     "fmt"
     "bytes"
+    "strings"
     "syscall"
     "io/ioutil"
     "encoding/json"
@@ -12,22 +13,16 @@ import (
 )
 
 func Config(details *utils.ArtifactoryDetails, interactive, shouldEncPassword bool) {
-    var bytePassword []byte
     if interactive {
         if details.Url == "" {
-            print("Artifactory Url: ")
+            print("Artifactory URL: ")
             fmt.Scanln(&details.Url)
         }
-        if details.User == "" {
-            print("User: ")
-            fmt.Scanln(&details.User)
-        }
-        if details.Password == "" {
-            print("Password: ")
-            var err error
-            bytePassword, err = terminal.ReadPassword(int(syscall.Stdin))
-            details.Password = string(bytePassword)
-            utils.CheckError(err)
+
+        if strings.Index(details.Url, "ssh://") == 0 || strings.Index(details.Url, "SSH://") == 0 {
+            readSshKeyPathFromConsole(details)
+        } else {
+            readCredentialsFromConsole(details)
         }
     }
     details.Url = utils.AddTrailingSlashIfNeeded(details.Url)
@@ -35,6 +30,29 @@ func Config(details *utils.ArtifactoryDetails, interactive, shouldEncPassword bo
         details = encryptPassword(details)
     }
     writeConfFile(details)
+}
+
+func readSshKeyPathFromConsole(details *utils.ArtifactoryDetails) {
+    if details.SshKeyPath == "" {
+        print("SSH key file path: ")
+        fmt.Scanln(&details.SshKeyPath)
+    }
+    if !utils.IsFileExists(details.SshKeyPath) {
+        fmt.Println("Warning: Could not find SSH key file at: " + details.SshKeyPath)
+    }
+}
+
+func readCredentialsFromConsole(details *utils.ArtifactoryDetails) {
+    if details.User == "" {
+        print("User: ")
+        fmt.Scanln(&details.User)
+    }
+    if details.Password == "" {
+        print("Password: ")
+        bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+        details.Password = string(bytePassword)
+        utils.CheckError(err)
+    }
 }
 
 func ShowConfig() {
@@ -47,6 +65,9 @@ func ShowConfig() {
     }
     if details.Password != "" {
         fmt.Println("Password: " + details.Password)
+    }
+    if details.SshKeyPath != "" {
+        fmt.Println("SSH key file path: " + details.SshKeyPath)
     }
 }
 

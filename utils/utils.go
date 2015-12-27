@@ -88,4 +88,6 @@ type ArtifactoryDetails struct {
     Url string
     User string
     Password string
+    SshKeyPath string
+    SshAuthHeaders map[string]string
 }
