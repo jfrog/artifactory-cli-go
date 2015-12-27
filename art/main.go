@@ -69,7 +69,7 @@ func getFlags() []cli.Flag {
         },
         cli.StringFlag{
          Name:  "ssh-key-path",
-         Usage: "[Optional] SSH key path",
+         Usage: "[Optional] SSH key file path",
         },
     }
 }
