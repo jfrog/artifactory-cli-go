@@ -2,6 +2,8 @@
     "package": {
         "name": "artifactory-cli-linux-amd64",
         "repo": "artifactory-cli-go",
+        "licenses": ["Apache-2.0"],
+        "vcs_url": "https://github.com/JFrogDev/artifactory-cli-go.git",
         "subject": "jfrog"
     },
     "version": {
@@ -10,6 +12,6 @@
         "gpgSign": true
     },
     "files":
-        [{"includePattern": "/home/travis/gopath/bin/art", "uploadPattern": "1.3.0/artifactory-cli-linux-amd64/art"}],
+    [{"includePattern": "../../../../bin/art", "uploadPattern": "1.3.0/artifactory-cli-linux-amd64/art"}],
     "publish": false
 }

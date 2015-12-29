@@ -8,7 +8,7 @@ import (
     "strconv"
     "io/ioutil"
     "encoding/json"
-    "golang.org/x/crypto/ssh"
+    "github.com/JFrogDev/artifactory-cli-go/Godeps/_workspace/src/golang.org/x/crypto/ssh"
 )
 
 func SshAuthentication(details *ArtifactoryDetails) {

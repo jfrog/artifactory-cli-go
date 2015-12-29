@@ -1,5 +1,3 @@
-
-
 [![Build Status](https://travis-ci.org/JFrogDev/artifactory-cli-go.svg)](https://travis-ci.org/JFrogDev/artifactory-cli-go)
 
 ## Artifactory CLI

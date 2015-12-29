@@ -9,7 +9,7 @@ import (
 )
 
 func TestConfig(t *testing.T){
-    inputDetails := utils.ArtifactoryDetails { "http://localhost:8080/artifactory", "admin", "password" }
+    inputDetails := utils.ArtifactoryDetails { "http://localhost:8080/artifactory", "admin", "password", "", nil }
     Config(&inputDetails, false, false)
     outputConfig := GetConfig()
     printConfigStruct(&inputDetails)
