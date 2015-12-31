@@ -45,7 +45,7 @@ func SshAuthentication(details *ArtifactoryDetails) {
     var buf bytes.Buffer
     go io.Copy(&buf, stdout)
 
-    session.Run("cli-authenticate")
+    session.Run("jfrog-authenticate")
 
     var result SshAuthResult
     err = json.Unmarshal(buf.Bytes(), &result)
