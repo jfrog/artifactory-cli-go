@@ -196,5 +196,5 @@ Artifactory supports SSH Key authentication from version 4.4 with version 1.3.0 
 To authenticate yourself to Artifactory with an SSH key, execute the following instructions:
 * Enable SSH authentication in Artifactory as described in the [Artifactory Documentation](https://www.jfrog.com/confluence/display/RTF/SSH+Integration).
 * Configure your Artifactory URL to have the following format: *ssh://[host]:[port]* using the *--url* command option or the config command.
-Please make sure the *[host]* URL section does not include your Artifactory context URL, but only hothe host name or IP. 
+Please make sure the *[host]* URL section does not include your Artifactory context URL, but only the host name or IP. 
 * Configure the path to your private SSH key file using the *--ssh-key-path* command option or the *config* command.
