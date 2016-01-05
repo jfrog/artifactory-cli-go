@@ -186,14 +186,14 @@ $ art config clear
 ```
 
 #### Security
-Artifactory CLI lets you authenticate yourself to Artifactory either using your Artifactory user and password, or using an SSH key.
+Artifactory CLI lets you authenticate yourself to Artifactory either using your Artifactory user and password, or using RSA public and private keys.
 
 ##### Authentication with user and password
 To use your Artifactory user and password, simply use the *--user* and *--password* command options as described above or configure your user and password using the *config* command.
 
-##### Authentication using an SSH key
-Artifactory supports SSH Key authentication from version 4.4 with version 1.3.0 and bove of the Artifactory CLI.
-To authenticate yourself to Artifactory with an SSH key, execute the following instructions:
+##### Authentication using RSA public and private keys
+Artifactory supports SSH authentication using RSA public and private keys. This allows these tools to exchange sensitive information with the Artifactory server that is authenticated via SSH. SSH authentication is supported from version 4.4 with version 1.3.0 and bove of the Artifactory CLI.
+To authenticate yourself to Artifactory using RSA keys, execute the following instructions:
 * Enable SSH authentication in Artifactory as described in the [Artifactory Documentation](https://www.jfrog.com/confluence/display/RTF/SSH+Integration).
 * Configure your Artifactory URL to have the following format: *ssh://[host]:[port]* using the *--url* command option or the config command.
 Please make sure the *[host]* URL section does not include your Artifactory context URL, but only the host name or IP. 
