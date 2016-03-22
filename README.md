@@ -5,6 +5,10 @@
 Artifactory CLI provides a command line interface for uploading and downloading artifacts to and from Artifactory.
 It supports Artifactory version 3.5.3 and above.
 
+### Deprecated
+
+***Artifactory CLI has been deprecated and is no longer being maintained or supported. [JFrog CLI](https://github.com/jfrogdev/jfrog-cli-go) is an evolution of Artifactory CLI, and adds many features including support for Bintray. All features of Artifactory CLI are supported by [JFrog CLI](https://github.com/jfrogdev/jfrog-cli-go) and migrating your scripts is extremely simple. To continue optimizing your file management, please start using [JFrog CLI](https://github.com/jfrogdev/jfrog-cli-go).***
+
 ### Getting Started
 
 #### Downloading the executables from Bintray
